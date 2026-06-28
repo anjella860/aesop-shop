@@ -1,11 +1,18 @@
 server:
   port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
 
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/aesop_shop
     username: postgres
     password: 1004
+    hikari:
+      connection-init-sql: SET client_encoding TO 'UTF8'
 
   jpa:
     hibernate:
@@ -23,8 +30,9 @@ spring:
   sql:
     init:
       mode: always
+      encoding: UTF-8
 
-# 토스페이먼츠 설정 (테스트 키)
+# Toss Payments settings
 toss:
   secret-key: ${TOSS_SECRET_KEY:}
   # Set TOSS_SECRET_KEY in your local environment. Do not commit the secret key.
