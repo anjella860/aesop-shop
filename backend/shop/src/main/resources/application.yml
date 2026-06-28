@@ -1,0 +1,24 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: shop
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/shop
+    username: postgres
+    password: 1004
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+      show-sql: true
+  security:
+    user:
+      name: admin
+      password: 1234
