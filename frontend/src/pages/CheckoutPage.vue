@@ -139,13 +139,11 @@ const form = ref({
   receiverName: "",
   receiverPhone: "",
   receiverAddress: "",
-  paymentMethod: "카드",
+  paymentMethod: "카드/간편결제",
 });
 
 const paymentMethods = [
-  { value: "카드", label: "신용/체크카드", icon: "💳" },
-  { value: "가상계좌", label: "가상계좌", icon: "🏦" },
-  { value: "간편결제", label: "간편결제", icon: "📱" },
+  { value: "카드/간편결제", label: "카드/간편결제", icon: "💳" },
 ];
 
 const totalPrice = computed(() =>
@@ -186,21 +184,26 @@ const handlePay = async () => {
       receiverAddress: form.value.receiverAddress,
       paymentMethod: form.value.paymentMethod,
     });
-    const orderId = orderRes.data.id;
+    const orderId = String(orderRes.data.id).padStart(6, "0");
     const finalAmount = totalPrice.value + shippingFee.value;
 
     // 2. 토스페이먼츠 위젯 결제 요청
     const tossPayments = await loadTossPayments();
-    const widgets = tossPayments.widgets({ customerKey: "ANONYMOUS" });
+    const payment = tossPayments.payment({ customerKey: "ANONYMOUS" });
 
-    await widgets.setAmount({ currency: "KRW", value: finalAmount });
-
-    await widgets.requestPayment({
-      orderId: String(orderId),
+    await payment.requestPayment({
+      method: "CARD",
+      amount: { currency: "KRW", value: finalAmount },
+      orderId,
       orderName: cartItems.value[0].name +
         (cartItems.value.length > 1 ? ` 외 ${cartItems.value.length - 1}건` : ""),
       successUrl: `${window.location.origin}/payment/success`,
       failUrl: `${window.location.origin}/payment/fail`,
+      customerName: form.value.receiverName,
+      customerMobilePhone: form.value.receiverPhone.replace(/[^0-9]/g, ""),
+      card: {
+        flowMode: "DEFAULT",
+      },
     });
   } catch (e) {
     console.error("결제 요청 실패", e);
