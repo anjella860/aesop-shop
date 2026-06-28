@@ -139,7 +139,7 @@ const isPaying = ref(false);
 const fallbackImg =
   "https://via.placeholder.com/80x80/3D4A2E/FAFAF7?text=AESOP";
 const TOSS_CLIENT_KEY =
-  import.meta.env.VITE_TOSS_CLIENT_KEY || "test_ck_26DIbXAaVOOZv4EwM2YK3qY5OQ9R";
+  import.meta.env.VITE_TOSS_CLIENT_KEY || "test_ck_26DIbXAaVOOZv4EwM2YK3qY50Q9R";
 
 const form = ref({
   receiverName: "",
