@@ -17,6 +17,8 @@ public class OrderResponseDto {
     private String receiverPhone;
     private String receiverAddress;
     private String paymentMethod;
+    private String deliveryCompany;
+    private String trackingNumber;
     private LocalDateTime orderedAt;
 
     // Entity → DTO 변환
@@ -29,6 +31,8 @@ public class OrderResponseDto {
         this.receiverPhone = orders.getReceiverPhone();
         this.receiverAddress = orders.getReceiverAddress();
         this.paymentMethod = orders.getPaymentMethod();
+        this.deliveryCompany = orders.getDeliveryCompany();
+        this.trackingNumber = orders.getTrackingNumber();
         this.orderedAt = orders.getOrderedAt();
     }
 }

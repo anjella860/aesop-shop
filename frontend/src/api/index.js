@@ -27,6 +27,7 @@ export const memberAPI = {
   signup: (data) => api.post("/api/members/signup", data),
   getMyInfo: () => api.get("/api/members/me"),
   updateMyInfo: (data) => api.put("/api/members/me", data),
+  deleteMyInfo: (password) => api.delete("/mypage", { params: { password } }),
 };
 
 // 장바구니 API
@@ -42,6 +43,7 @@ export const orderAPI = {
   getOrders: () => api.get("/api/orders"),
   getOrderById: (id) => api.get(`/api/orders/${id}`),
   createOrder: (data) => api.post("/api/orders", data),
+  cancelOrder: (id) => api.post(`/api/orders/${id}/cancel`),
 };
 
 // 결제 API
@@ -60,8 +62,9 @@ export const reviewAPI = {
 
 // QnA API
 export const qnaAPI = {
-  getByProduct: (productId) => api.get(`/api/qna/product/${productId}`),
-  create: (data) => api.post("/api/qna", data),
+  getByProduct: (productId) => api.get(`/api/qna/${productId}`),
+  create: (productId, data) => api.post(`/api/qna/${productId}`, data),
+  update: (id, data) => api.put(`/api/qna/${id}`, data),
   delete: (id) => api.delete(`/api/qna/${id}`),
 };
 
@@ -74,6 +77,7 @@ export const noticeAPI = {
 // 관리자 API
 export const adminAPI = {
   getMembers: () => api.get("/admin/members"),
+  searchMembers: (email) => api.get("/admin/members/search", { params: { email } }),
   changeMemberRole: (id, role) => api.put(`/admin/members/${id}/role`, null, { params: { role } }),
   deleteMember: (id) => api.delete(`/admin/members/${id}`),
   addProduct: (data) => api.post("/admin/products", data, {
@@ -85,8 +89,12 @@ export const adminAPI = {
   deleteProduct: (id) => api.delete(`/admin/products/${id}`),
   getOrders: () => api.get("/admin/orders"),
   changeOrderStatus: (id, status) => api.put(`/admin/orders/${id}/status`, null, { params: { status } }),
+  updateDelivery: (id, data) => api.put(`/admin/orders/${id}/delivery`, null, { params: data }),
   getQna: () => api.get("/admin/qna"),
   answerQna: (id, answer) => api.put(`/admin/qna/${id}/answer`, null, { params: { answer } }),
+  deleteQnaAnswer: (id) => api.delete(`/admin/qna/${id}/answer`),
+  getReviews: () => api.get("/admin/reviews"),
+  deleteReview: (id) => api.delete(`/admin/reviews/${id}`),
   addNotice: (data) => api.post("/admin/notice", data),
   updateNotice: (id, data) => api.put(`/admin/notice/${id}`, data),
   deleteNotice: (id) => api.delete(`/admin/notice/${id}`),

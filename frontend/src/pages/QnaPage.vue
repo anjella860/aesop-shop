@@ -11,6 +11,12 @@
       <div class="qna-form-box">
         <h2 class="form-title">문의 작성</h2>
         <div class="form-group">
+          <label class="form-label">상품 선택</label>
+          <select v-model.number="selectedProductId" class="form-input" @change="fetchQna">
+            <option v-for="product in products" :key="product.id" :value="product.id">{{ product.name }}</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label class="form-label">제목</label>
           <input v-model="form.title" type="text" class="form-input" placeholder="문의 제목을 입력하세요" />
         </div>
@@ -31,15 +37,24 @@
         <div v-else>
           <div v-for="qna in qnaList" :key="qna.id" class="qna-item">
             <div class="qna-item__header" @click="toggleQna(qna.id)">
-              <span class="qna-status" :class="qna.answered ? 'answered' : 'pending'">
-                {{ qna.answered ? '답변완료' : '답변대기' }}
+              <span class="qna-status" :class="qna.isAnswered ? 'answered' : 'pending'">
+                {{ qna.isAnswered ? '답변완료' : '답변대기' }}
               </span>
               <span class="qna-title">{{ qna.title }}</span>
               <span class="qna-date">{{ formatDate(qna.createdAt) }}</span>
               <span class="qna-toggle">{{ openId === qna.id ? '▲' : '▽' }}</span>
             </div>
             <div v-if="openId === qna.id" class="qna-item__body">
-              <p class="qna-content">{{ qna.content }}</p>
+              <div v-if="editingId === qna.id" class="qna-edit">
+                <input v-model="editForm.title" class="form-input" />
+                <textarea v-model="editForm.content" class="form-textarea" rows="4"></textarea>
+                <button class="btn-submit" @click="updateQna(qna.id)">수정 저장</button>
+              </div>
+              <p v-else class="qna-content">{{ qna.content }}</p>
+              <div class="qna-actions">
+                <button class="btn-small" @click="startEdit(qna)">수정</button>
+                <button class="btn-small btn-danger" @click="deleteQna(qna.id)">삭제</button>
+              </div>
               <div v-if="qna.answer" class="qna-answer">
                 <span class="answer-label">답변</span>
                 <p>{{ qna.answer }}</p>
@@ -54,20 +69,24 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { qnaAPI } from "../api/index.js";
+import { productAPI, qnaAPI } from "../api/index.js";
 
+const products = ref([]);
+const selectedProductId = ref(null);
 const qnaList = ref([]);
 const openId = ref(null);
 const msg = ref("");
 const form = ref({ title: "", content: "" });
+const editingId = ref(null);
+const editForm = ref({ title: "", content: "" });
 
 const formatDate = (d) => d ? new Date(d).toLocaleDateString("ko-KR") : "";
 const toggleQna = (id) => { openId.value = openId.value === id ? null : id; };
 
 const fetchQna = async () => {
   try {
-    // 전체 문의 목록 (실제 API에 맞게 조정)
-    const res = await qnaAPI.getByProduct(0);
+    if (!selectedProductId.value) return;
+    const res = await qnaAPI.getByProduct(selectedProductId.value);
     qnaList.value = res.data;
   } catch (e) { qnaList.value = []; }
 };
@@ -78,7 +97,7 @@ const submitQna = async () => {
     return;
   }
   try {
-    await qnaAPI.create({ ...form.value });
+    await qnaAPI.create(selectedProductId.value, { ...form.value });
     msg.value = "문의가 등록되었습니다.";
     form.value = { title: "", content: "" };
     await fetchQna();
@@ -88,7 +107,29 @@ const submitQna = async () => {
   }
 };
 
-onMounted(fetchQna);
+const startEdit = (qna) => {
+  editingId.value = qna.id;
+  editForm.value = { title: qna.title, content: qna.content };
+};
+
+const updateQna = async (id) => {
+  await qnaAPI.update(id, editForm.value);
+  editingId.value = null;
+  await fetchQna();
+};
+
+const deleteQna = async (id) => {
+  if (!window.confirm("문의글을 삭제할까요?")) return;
+  await qnaAPI.delete(id);
+  await fetchQna();
+};
+
+onMounted(async () => {
+  const res = await productAPI.getAll();
+  products.value = res.data;
+  selectedProductId.value = products.value[0]?.id || null;
+  await fetchQna();
+});
 </script>
 
 <style scoped>
@@ -128,4 +169,8 @@ onMounted(fetchQna);
 .qna-answer { border-top: 1px solid var(--color-border); padding-top: 16px; }
 .answer-label { display: inline-block; font-size: 11px; letter-spacing: 2px; color: var(--color-gold); margin-bottom: 8px; }
 .qna-answer p { font-size: 14px; color: var(--color-text); line-height: 1.7; }
+.qna-actions { display: flex; gap: 8px; margin-bottom: 12px; }
+.btn-small { padding: 6px 12px; border: 1px solid var(--color-border); background: transparent; cursor: pointer; }
+.btn-danger { color: #8a2c2c; border-color: #8a2c2c; }
+.qna-edit { display: grid; gap: 10px; margin-bottom: 12px; }
 </style>

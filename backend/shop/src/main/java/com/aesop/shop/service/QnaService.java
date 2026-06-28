@@ -61,6 +61,15 @@ public class QnaService {
         qnaRepository.save(qna);
     }
 
+    // 관리자 답변 삭제
+    public void deleteAnswer(Long id) {
+        Qna qna = qnaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("QnA가 존재하지 않습니다."));
+        qna.setAnswer(null);
+        qna.setIsAnswered(false);
+        qnaRepository.save(qna);
+    }
+
     // 전체 QnA 목록 (관리자)
     public List<Qna> findAllForAdmin() {
         return qnaRepository.findAllByOrderByCreatedAtDesc();

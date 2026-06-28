@@ -139,6 +139,16 @@ public class OrderService {
         ordersRepository.save(order);
     }
 
+    public Orders updateDelivery(Long id, String deliveryCompany, String trackingNumber) {
+        Orders order = findById(id);
+        order.setDeliveryCompany(deliveryCompany);
+        order.setTrackingNumber(trackingNumber);
+        if (order.getStatus() == OrderStatus.CONFIRMED) {
+            order.setStatus(OrderStatus.SHIPPED);
+        }
+        return ordersRepository.save(order);
+    }
+
     private void cancel(Orders order) {
         if (order.getStatus() != OrderStatus.PENDING && order.getStatus() != OrderStatus.CONFIRMED) {
             throw new RuntimeException("Order cannot be cancelled.");

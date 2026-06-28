@@ -6,6 +6,7 @@ import com.aesop.shop.dto.notice.NoticeResponseDto;
 import com.aesop.shop.dto.product.ProductRequestDto;
 import com.aesop.shop.dto.product.ProductResponseDto;
 import com.aesop.shop.dto.qna.QnaResponseDto;
+import com.aesop.shop.dto.review.ReviewResponseDto;
 import com.aesop.shop.dto.order.OrderResponseDto;
 import com.aesop.shop.entity.OrderStatus;
 import com.aesop.shop.entity.Product;
@@ -29,6 +30,7 @@ public class AdminController {
     private final OrderService orderService;
     private final NoticeService noticeService;
     private final QnaService qnaService;
+    private final ReviewService reviewService;
 
     // ========== 회원 관리 ==========
 
@@ -36,6 +38,16 @@ public class AdminController {
     @GetMapping("/members")
     public ResponseEntity<List<MemberResponseDto>> getMembers() {
         List<MemberResponseDto> list = memberService.findAll()
+                .stream()
+                .map(MemberResponseDto::new)
+                .toList();
+        return ResponseEntity.ok(list);
+    }
+
+    // 회원 이메일 검색
+    @GetMapping("/members/search")
+    public ResponseEntity<List<MemberResponseDto>> searchMembers(@RequestParam String email) {
+        List<MemberResponseDto> list = memberService.findByEmailContaining(email)
                 .stream()
                 .map(MemberResponseDto::new)
                 .toList();
@@ -129,6 +141,16 @@ public class AdminController {
         return ResponseEntity.ok("상태 변경 완료");
     }
 
+    // 배송 정보 등록/수정
+    @PutMapping("/orders/{id}/delivery")
+    public ResponseEntity<OrderResponseDto> updateDelivery(
+            @PathVariable Long id,
+            @RequestParam String deliveryCompany,
+            @RequestParam String trackingNumber) {
+        return ResponseEntity.ok(new OrderResponseDto(
+                orderService.updateDelivery(id, deliveryCompany, trackingNumber)));
+    }
+
     // ========== QnA 관리 ==========
 
     // QnA 답변 등록
@@ -146,6 +168,30 @@ public class AdminController {
             @RequestParam String answer) {
         qnaService.addAnswer(id, answer);
         return ResponseEntity.ok("답변 등록 완료");
+    }
+
+    // QnA 답변 삭제
+    @DeleteMapping("/qna/{id}/answer")
+    public ResponseEntity<String> deleteQnaAnswer(@PathVariable Long id) {
+        qnaService.deleteAnswer(id);
+        return ResponseEntity.ok("답변 삭제 완료");
+    }
+
+    // ========== 리뷰 관리 ==========
+
+    @GetMapping("/reviews")
+    public ResponseEntity<List<ReviewResponseDto>> getReviews() {
+        List<ReviewResponseDto> list = reviewService.findAllForAdmin()
+                .stream()
+                .map(ReviewResponseDto::new)
+                .toList();
+        return ResponseEntity.ok(list);
+    }
+
+    @DeleteMapping("/reviews/{id}")
+    public ResponseEntity<String> deleteReview(@PathVariable Long id) {
+        reviewService.deleteReviewByAdmin(id);
+        return ResponseEntity.ok("리뷰 삭제 완료");
     }
 
     // ========== 공지사항 관리 ==========

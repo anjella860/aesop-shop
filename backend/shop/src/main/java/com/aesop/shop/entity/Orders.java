@@ -40,6 +40,12 @@ public class Orders {
     @Column(name = "payment_method", nullable = false, length = 50)
     private String paymentMethod;
 
+    @Column(name = "delivery_company", length = 100)
+    private String deliveryCompany;
+
+    @Column(name = "tracking_number", length = 100)
+    private String trackingNumber;
+
     @Column(name = "ordered_at", nullable = false, updatable = false)
     private LocalDateTime orderedAt;
 

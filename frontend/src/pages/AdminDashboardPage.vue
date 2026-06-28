@@ -206,6 +206,7 @@
                 <th>금액</th>
                 <th>상태</th>
                 <th>주문일</th>
+                <th>배송</th>
               </tr>
             </thead>
             <tbody>
@@ -220,9 +221,16 @@
                   </select>
                 </td>
                 <td>{{ formatDate(order.orderedAt) }}</td>
+                <td>
+                  <div class="delivery-cell">
+                    <span>{{ order.deliveryCompany || "미등록" }}</span>
+                    <small>{{ order.trackingNumber || "-" }}</small>
+                    <button type="button" @click="editDelivery(order)">배송등록</button>
+                  </div>
+                </td>
               </tr>
               <tr v-if="orders.length === 0">
-                <td colspan="6" class="empty">주문이 없습니다.</td>
+                <td colspan="7" class="empty">주문이 없습니다.</td>
               </tr>
             </tbody>
           </table>
@@ -236,6 +244,11 @@
             <h2>회원 관리</h2>
           </div>
         </div>
+        <form class="search-row" @submit.prevent="searchMembers">
+          <input v-model.trim="memberSearch" placeholder="이메일로 회원 검색" />
+          <button class="ghost-btn" type="submit">검색</button>
+          <button class="ghost-btn" type="button" @click="resetMemberSearch">전체</button>
+        </form>
         <div class="member-list">
           <div class="member-row" v-for="member in members" :key="member.id">
             <div>
@@ -274,6 +287,10 @@
             <div v-if="qna.isAnswered" class="qna-answer">
               <span>답변</span>
               <p>{{ qna.answer }}</p>
+              <div class="actions">
+                <button type="button" @click="editQnaAnswer(qna)">답변 수정</button>
+                <button type="button" @click="deleteQnaAnswer(qna.id)">답변 삭제</button>
+              </div>
             </div>
             <form v-else class="qna-answer-form" @submit.prevent="submitQnaAnswer(qna.id)">
               <textarea v-model.trim="answerMap[qna.id]" rows="3" placeholder="답변을 입력하세요" required></textarea>
@@ -281,6 +298,30 @@
             </form>
           </article>
           <p v-if="qnas.length === 0" class="empty">등록된 QnA가 없습니다.</p>
+        </div>
+      </section>
+
+      <section v-if="activeTab === 'reviews'" class="tab-panel admin-section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Reviews</p>
+            <h2>리뷰 관리</h2>
+          </div>
+        </div>
+        <div class="qna-list">
+          <article class="qna-item" v-for="review in reviews" :key="review.id">
+            <div class="qna-item__head">
+              <span class="status-badge status--delivered">리뷰</span>
+              <strong>{{ productName(review.productId) }}</strong>
+              <small>{{ formatDate(review.createdAt) }}</small>
+            </div>
+            <p class="qna-meta">회원 #{{ review.memberId }} · 평점 {{ review.rating }}</p>
+            <p class="qna-content">{{ review.content }}</p>
+            <div class="actions">
+              <button type="button" @click="removeReview(review.id)">리뷰 삭제</button>
+            </div>
+          </article>
+          <p v-if="reviews.length === 0" class="empty">등록된 리뷰가 없습니다.</p>
         </div>
       </section>
 
@@ -330,7 +371,9 @@ const members = ref([]);
 const orders = ref([]);
 const notices = ref([]);
 const qnas = ref([]);
+const reviews = ref([]);
 const answerMap = reactive({});
+const memberSearch = ref("");
 const orderStatuses = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"];
 
 const productForm = reactive({
@@ -363,6 +406,7 @@ const adminTabs = computed(() => [
   { key: "orders", label: "주문 관리", description: "주문 상태와 수령 정보를 관리합니다.", count: orders.value.length },
   { key: "members", label: "회원 관리", description: "회원 권한과 계정을 관리합니다.", count: members.value.length },
   { key: "qna", label: "QnA 답변", description: "고객 문의를 확인하고 답변합니다.", count: unansweredQnas.value.length },
+  { key: "reviews", label: "리뷰 관리", description: "구매 리뷰를 확인하고 부적절한 리뷰를 삭제합니다.", count: reviews.value.length },
   { key: "notices", label: "공지사항", description: "쇼핑몰 공지사항을 작성하고 수정합니다.", count: notices.value.length },
 ]);
 
@@ -430,13 +474,14 @@ const loadDashboard = async () => {
   loading.value = true;
   errorMessage.value = "";
   try {
-    const [productRes, categoryRes, memberRes, orderRes, noticeRes, qnaRes] = await Promise.all([
+    const [productRes, categoryRes, memberRes, orderRes, noticeRes, qnaRes, reviewRes] = await Promise.all([
       productAPI.getAll(),
       categoryAPI.getAll(),
       adminAPI.getMembers(),
       adminAPI.getOrders(),
       noticeAPI.getAll(),
       adminAPI.getQna(),
+      adminAPI.getReviews(),
     ]);
     products.value = productRes.data;
     categories.value = categoryRes.data;
@@ -444,6 +489,7 @@ const loadDashboard = async () => {
     orders.value = orderRes.data;
     notices.value = noticeRes.data;
     qnas.value = qnaRes.data;
+    reviews.value = reviewRes.data;
     if (!productForm.categoryId) resetProductForm();
   } catch (error) {
     showError("관리자 권한이 필요하거나 서버 응답을 불러오지 못했습니다.", error);
@@ -500,6 +546,24 @@ const changeOrderStatus = async (id, status) => {
   }
 };
 
+const searchMembers = async () => {
+  try {
+    if (!memberSearch.value) {
+      await loadDashboard();
+      return;
+    }
+    const response = await adminAPI.searchMembers(memberSearch.value);
+    members.value = response.data;
+  } catch (error) {
+    showError("회원 검색에 실패했습니다.", error);
+  }
+};
+
+const resetMemberSearch = async () => {
+  memberSearch.value = "";
+  await loadDashboard();
+};
+
 const changeMemberRole = async (id, role) => {
   try {
     await adminAPI.changeMemberRole(id, role);
@@ -519,6 +583,19 @@ const removeMember = async (id) => {
   }
 };
 
+const editDelivery = async (order) => {
+  const deliveryCompany = window.prompt("택배사를 입력하세요.", order.deliveryCompany || "");
+  if (deliveryCompany === null) return;
+  const trackingNumber = window.prompt("송장번호를 입력하세요.", order.trackingNumber || "");
+  if (trackingNumber === null) return;
+  try {
+    await adminAPI.updateDelivery(order.id, { deliveryCompany, trackingNumber });
+    await loadDashboard();
+  } catch (error) {
+    showError("배송 정보 저장에 실패했습니다.", error);
+  }
+};
+
 const submitQnaAnswer = async (id) => {
   const answer = answerMap[id];
   if (!answer) return;
@@ -528,6 +605,37 @@ const submitQnaAnswer = async (id) => {
     await loadDashboard();
   } catch (error) {
     showError("QnA 답변 등록에 실패했습니다.", error);
+  }
+};
+
+const editQnaAnswer = async (qna) => {
+  const answer = window.prompt("답변을 수정하세요.", qna.answer || "");
+  if (answer === null || !answer.trim()) return;
+  try {
+    await adminAPI.answerQna(qna.id, answer);
+    await loadDashboard();
+  } catch (error) {
+    showError("QnA 답변 수정에 실패했습니다.", error);
+  }
+};
+
+const deleteQnaAnswer = async (id) => {
+  if (!window.confirm("답변을 삭제할까요?")) return;
+  try {
+    await adminAPI.deleteQnaAnswer(id);
+    await loadDashboard();
+  } catch (error) {
+    showError("QnA 답변 삭제에 실패했습니다.", error);
+  }
+};
+
+const removeReview = async (id) => {
+  if (!window.confirm("리뷰를 삭제할까요?")) return;
+  try {
+    await adminAPI.deleteReview(id);
+    await loadDashboard();
+  } catch (error) {
+    showError("리뷰 삭제에 실패했습니다.", error);
   }
 };
 
@@ -764,6 +872,27 @@ h2 {
   gap: 20px;
   justify-content: space-between;
   margin-bottom: 22px;
+}
+
+.search-row {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  margin-bottom: 18px;
+}
+
+.delivery-cell {
+  display: grid;
+  gap: 4px;
+}
+
+.delivery-cell small {
+  color: var(--color-text-sub);
+}
+
+.delivery-cell button {
+  justify-self: start;
+  min-height: 30px;
 }
 
 .product-form,

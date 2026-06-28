@@ -28,6 +28,11 @@
           :class="{ active: activeTab === 'profile' }"
           @click="activeTab = 'profile'"
         >정보 수정</button>
+        <button
+          class="tab-btn"
+          :class="{ active: activeTab === 'withdraw' }"
+          @click="activeTab = 'withdraw'"
+        >회원 탈퇴</button>
       </div>
 
       <!-- 주문 내역 탭 -->
@@ -56,10 +61,19 @@
                 <span>결제수단</span>
                 <span>{{ order.paymentMethod }}</span>
               </div>
+              <div v-if="order.deliveryCompany || order.trackingNumber" class="order-info-row">
+                <span>배송정보</span>
+                <span>{{ order.deliveryCompany || '배송사 준비중' }} {{ order.trackingNumber || '' }}</span>
+              </div>
               <div class="order-info-row order-total">
                 <span>결제금액</span>
                 <span>{{ order.totalPrice?.toLocaleString() }}원</span>
               </div>
+              <button
+                v-if="canCancel(order.status)"
+                class="btn-cancel-order"
+                @click="cancelOrder(order.id)"
+              >주문 취소</button>
             </div>
           </div>
         </div>
@@ -78,6 +92,16 @@
         <p v-if="updateMsg" class="update-msg">{{ updateMsg }}</p>
         <button class="btn-update" @click="handleUpdate">정보 저장</button>
       </div>
+
+      <div v-if="activeTab === 'withdraw'" class="profile-form">
+        <p class="withdraw-copy">회원 탈퇴 시 계정 정보가 삭제되며 되돌릴 수 없습니다.</p>
+        <div class="form-group">
+          <label class="form-label">비밀번호 확인</label>
+          <input v-model="deletePassword" type="password" class="form-input" />
+        </div>
+        <p v-if="deleteMsg" class="update-msg">{{ deleteMsg }}</p>
+        <button class="btn-delete-account" @click="handleDeleteAccount">회원 탈퇴</button>
+      </div>
     </div>
   </div>
 </template>
@@ -92,6 +116,8 @@ const member = ref(null);
 const orders = ref([]);
 const activeTab = ref("orders");
 const updateMsg = ref("");
+const deleteMsg = ref("");
+const deletePassword = ref("");
 const editForm = ref({ name: "", phone: "" });
 
 const formatDate = (dateStr) => {
@@ -110,6 +136,8 @@ const statusLabel = (status) => {
   return map[status] || status;
 };
 
+const canCancel = (status) => ["PENDING", "CONFIRMED"].includes(status);
+
 const statusClass = (status) => ({
   "status--pending": status === "PENDING",
   "status--confirmed": status === "CONFIRMED",
@@ -127,6 +155,27 @@ const handleLogout = async () => {
   } finally {
     router.push("/login");
   }
+};
+
+const handleDeleteAccount = async () => {
+  if (!deletePassword.value) {
+    deleteMsg.value = "비밀번호를 입력해주세요.";
+    return;
+  }
+  if (!window.confirm("정말 탈퇴하시겠습니까?")) return;
+  try {
+    await memberAPI.deleteMyInfo(deletePassword.value);
+    router.push("/signup");
+  } catch (e) {
+    deleteMsg.value = "회원 탈퇴에 실패했습니다.";
+  }
+};
+
+const cancelOrder = async (id) => {
+  if (!window.confirm("주문을 취소하시겠습니까?")) return;
+  await orderAPI.cancelOrder(id);
+  const ordersRes = await orderAPI.getOrders();
+  orders.value = ordersRes.data;
 };
 
 const handleUpdate = async () => {
@@ -394,5 +443,23 @@ onMounted(async () => {
 
 .btn-update:hover {
   background-color: #2c3820;
+}
+
+.withdraw-copy {
+  color: var(--color-text-sub);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.btn-delete-account {
+  align-self: flex-start;
+  padding: 12px 32px;
+  background-color: #8a2c2c;
+  color: white;
+  border: none;
+  font-family: var(--font-kr);
+  font-size: 13px;
+  letter-spacing: 1px;
+  cursor: pointer;
 }
 </style>
