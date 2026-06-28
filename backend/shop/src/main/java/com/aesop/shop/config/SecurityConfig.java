@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -20,7 +22,6 @@ public class SecurityConfig {
 
     private final MemberService memberService;
 
-    // 인증/인가 설정
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
@@ -29,15 +30,15 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/", "/signup", "/login",
+                                "/", "/signup", "/login", "/api/members/signup", "/api/members/login",
                                 "/css/**", "/js/**", "/images/**",
                                 "/api/products/**", "/api/categories/**",
                                 "/api/notice/**", "/api/reviews/*/count"
                         ).permitAll()
                         .requestMatchers(
-                                "/mypage/**", "/api/orders/**",
-                                "/api/cart/**", "/api/reviews/**",
-                                "/api/qna/**"
+                                "/mypage/**", "/api/members/me", "/api/members/logout",
+                                "/api/orders/**", "/api/payments/**",
+                                "/api/cart/**", "/api/reviews/**", "/api/qna/**"
                         ).hasRole("USER")
                         .requestMatchers("/admin/**")
                         .hasRole("ADMIN")
@@ -45,14 +46,11 @@ public class SecurityConfig {
                 )
                 .formLogin(form ->
                         form.loginPage("/login")
+                                .loginProcessingUrl("/login")
                                 .usernameParameter("email")
                                 .passwordParameter("password")
-                                .successHandler((req, res, auth) -> {
-                                    res.setStatus(200);
-                                })
-                                .failureHandler((req, res, e) -> {
-                                    res.setStatus(401);
-                                })
+                                .successHandler((req, res, auth) -> res.setStatus(200))
+                                .failureHandler((req, res, e) -> res.setStatus(401))
                 )
                 .logout(logout ->
                         logout.logoutUrl("/logout")
@@ -63,7 +61,11 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // 사용자 인증 처리
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
+    }
+
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> {
@@ -76,7 +78,6 @@ public class SecurityConfig {
         };
     }
 
-    // CORS 설정
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
@@ -84,8 +85,7 @@ public class SecurityConfig {
         config.addAllowedOrigin("http://localhost:5173");
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
     }

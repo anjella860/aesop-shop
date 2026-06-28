@@ -17,22 +17,25 @@ public class CartService {
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
 
-    // 장바구니 목록 조회
     public List<Cart> getCartList(Long memberId) {
         return cartRepository.findByMemberId(memberId);
     }
 
-    // 장바구니 담기
     public Cart addCart(Long memberId, Long productId, int quantity) {
+        validateQuantity(quantity);
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("상품이 존재하지 않습니다."));
+                .orElseThrow(() -> new RuntimeException("Product not found."));
         if (product.getStock() < quantity) {
-            throw new RuntimeException("재고가 부족합니다.");
+            throw new RuntimeException("Not enough stock.");
         }
         Optional<Cart> existCart = cartRepository.findByMemberIdAndProductId(memberId, productId);
         if (existCart.isPresent()) {
             Cart cart = existCart.get();
-            cart.setQuantity(cart.getQuantity() + quantity);
+            int nextQuantity = cart.getQuantity() + quantity;
+            if (product.getStock() < nextQuantity) {
+                throw new RuntimeException("Not enough stock.");
+            }
+            cart.setQuantity(nextQuantity);
             return cartRepository.save(cart);
         }
         Cart cart = Cart.builder()
@@ -43,21 +46,32 @@ public class CartService {
         return cartRepository.save(cart);
     }
 
-    // 수량 변경
-    public Cart updateCart(Long cartId, int quantity) {
-        Cart cart = cartRepository.findById(cartId)
-                .orElseThrow(() -> new RuntimeException("장바구니 항목이 존재하지 않습니다."));
+    public Cart updateCart(Long memberId, Long cartId, int quantity) {
+        validateQuantity(quantity);
+        Cart cart = cartRepository.findByIdAndMemberId(cartId, memberId)
+                .orElseThrow(() -> new RuntimeException("Cart item not found."));
+        Product product = productRepository.findById(cart.getProductId())
+                .orElseThrow(() -> new RuntimeException("Product not found."));
+        if (product.getStock() < quantity) {
+            throw new RuntimeException("Not enough stock.");
+        }
         cart.setQuantity(quantity);
         return cartRepository.save(cart);
     }
 
-    // 장바구니 삭제
-    public void deleteCart(Long cartId) {
-        cartRepository.deleteById(cartId);
+    public void deleteCart(Long memberId, Long cartId) {
+        Cart cart = cartRepository.findByIdAndMemberId(cartId, memberId)
+                .orElseThrow(() -> new RuntimeException("Cart item not found."));
+        cartRepository.delete(cart);
     }
 
-    // 장바구니 전체 삭제
     public void deleteAllCart(Long memberId) {
         cartRepository.deleteByMemberId(memberId);
+    }
+
+    private void validateQuantity(Integer quantity) {
+        if (quantity == null || quantity <= 0) {
+            throw new RuntimeException("Quantity must be greater than zero.");
+        }
     }
 }

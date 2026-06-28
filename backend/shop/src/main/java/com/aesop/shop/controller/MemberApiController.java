@@ -4,10 +4,17 @@ import com.aesop.shop.dto.member.MemberRequestDto;
 import com.aesop.shop.dto.member.MemberResponseDto;
 import com.aesop.shop.entity.Member;
 import com.aesop.shop.service.MemberService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,9 +22,9 @@ import org.springframework.web.bind.annotation.*;
 public class MemberApiController {
 
     private final MemberService memberService;
+    private final AuthenticationManager authenticationManager;
 
-    // 회원가입
-    @PostMapping("/signup")
+    @PostMapping({"/signup", "/api/members/signup"})
     public ResponseEntity<MemberResponseDto> signup(@RequestBody MemberRequestDto dto) {
         Member member = Member.builder()
                 .name(dto.getName())
@@ -30,16 +37,39 @@ public class MemberApiController {
         return ResponseEntity.ok(new MemberResponseDto(saved));
     }
 
-    // 내 정보 조회
-    @GetMapping("/mypage")
+    @PostMapping("/api/members/login")
+    public ResponseEntity<MemberResponseDto> login(
+            @RequestBody MemberRequestDto dto,
+            HttpServletRequest request) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword()));
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+        request.getSession(true).setAttribute(
+                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                context);
+
+        Member member = memberService.findByEmail(dto.getEmail());
+        return ResponseEntity.ok(new MemberResponseDto(member));
+    }
+
+    @PostMapping("/api/members/logout")
+    public ResponseEntity<Void> apiLogout(HttpServletRequest request) {
+        request.getSession(false).invalidate();
+        SecurityContextHolder.clearContext();
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping({"/mypage", "/api/members/me"})
     public ResponseEntity<MemberResponseDto> getMypage(
             @AuthenticationPrincipal UserDetails userDetails) {
         Member member = memberService.findByEmail(userDetails.getUsername());
         return ResponseEntity.ok(new MemberResponseDto(member));
     }
 
-    // 회원 정보 수정
-    @PutMapping("/mypage")
+    @PutMapping({"/mypage", "/api/members/me"})
     public ResponseEntity<MemberResponseDto> updateMember(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody MemberRequestDto dto) {
@@ -53,7 +83,6 @@ public class MemberApiController {
         return ResponseEntity.ok(new MemberResponseDto(updated));
     }
 
-    // 비밀번호 변경
     @PutMapping("/mypage/password")
     public ResponseEntity<String> changePassword(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -61,16 +90,15 @@ public class MemberApiController {
             @RequestParam String newPassword) {
         Member member = memberService.findByEmail(userDetails.getUsername());
         memberService.changePassword(member.getId(), currentPassword, newPassword);
-        return ResponseEntity.ok("비밀번호 변경 완료");
+        return ResponseEntity.ok("Password changed");
     }
 
-    // 회원 탈퇴
     @DeleteMapping("/mypage")
     public ResponseEntity<String> deleteMember(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam String password) {
         Member member = memberService.findByEmail(userDetails.getUsername());
         memberService.deleteMember(member.getId(), password);
-        return ResponseEntity.ok("탈퇴 완료");
+        return ResponseEntity.ok("Member deleted");
     }
 }
