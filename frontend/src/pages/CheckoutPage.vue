@@ -199,21 +199,16 @@ const handlePay = async () => {
 
     // 2. 토스페이먼츠 위젯 결제 요청
     const tossPayments = await loadTossPayments();
-    const payment = tossPayments.payment({ customerKey: "ANONYMOUS" });
 
-    await payment.requestPayment({
-      method: "CARD",
-      amount: { currency: "KRW", value: finalAmount },
+    await tossPayments.requestPayment("카드", {
+      amount: finalAmount,
       orderId,
       orderName: cartItems.value[0].name +
         (cartItems.value.length > 1 ? ` 외 ${cartItems.value.length - 1}건` : ""),
-      successUrl: `${window.location.origin}/payment/success`,
-      failUrl: `${window.location.origin}/payment/fail`,
       customerName: receiverName,
       customerMobilePhone: receiverPhone.replace(/[^0-9]/g, ""),
-      card: {
-        flowMode: "DEFAULT",
-      },
+      successUrl: `${window.location.origin}/payment/success`,
+      failUrl: `${window.location.origin}/payment/fail`,
     });
   } catch (e) {
     console.error("결제 요청 실패", e);
@@ -233,7 +228,7 @@ const loadTossPayments = () => {
       return;
     }
     const script = document.createElement("script");
-    script.src = "https://js.tosspayments.com/v2/standard";
+    script.src = "https://js.tosspayments.com/v1/payment";
     script.onload = () =>
       resolve(window.TossPayments(TOSS_CLIENT_KEY));
     script.onerror = reject;
