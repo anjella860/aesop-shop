@@ -165,10 +165,20 @@ const fetchCart = async () => {
 };
 
 const handlePay = async () => {
-  if (!form.value.receiverName || !form.value.receiverPhone || !form.value.receiverAddress) {
+  const receiverName = form.value.receiverName.trim();
+  const receiverPhone = form.value.receiverPhone.trim();
+  const receiverAddress = form.value.receiverAddress.trim();
+
+  if (!receiverName || !receiverPhone || !receiverAddress) {
     alert("배송 정보를 모두 입력해주세요.");
     return;
   }
+
+  if (receiverAddress.length < 5) {
+    alert("배송 주소를 정확히 입력해주세요.");
+    return;
+  }
+
   if (cartItems.value.length === 0) {
     alert("장바구니가 비어있습니다.");
     return;
@@ -179,9 +189,9 @@ const handlePay = async () => {
   try {
     // 1. 주문 생성
     const orderRes = await orderAPI.createOrder({
-      receiverName: form.value.receiverName,
-      receiverPhone: form.value.receiverPhone,
-      receiverAddress: form.value.receiverAddress,
+      receiverName,
+      receiverPhone,
+      receiverAddress,
       paymentMethod: form.value.paymentMethod,
     });
     const orderId = String(orderRes.data.id).padStart(6, "0");
@@ -199,8 +209,8 @@ const handlePay = async () => {
         (cartItems.value.length > 1 ? ` 외 ${cartItems.value.length - 1}건` : ""),
       successUrl: `${window.location.origin}/payment/success`,
       failUrl: `${window.location.origin}/payment/fail`,
-      customerName: form.value.receiverName,
-      customerMobilePhone: form.value.receiverPhone.replace(/[^0-9]/g, ""),
+      customerName: receiverName,
+      customerMobilePhone: receiverPhone.replace(/[^0-9]/g, ""),
       card: {
         flowMode: "DEFAULT",
       },
@@ -208,7 +218,8 @@ const handlePay = async () => {
   } catch (e) {
     console.error("결제 요청 실패", e);
     if (e.code !== "USER_CANCEL") {
-      alert("결제 중 오류가 발생했습니다.");
+      const serverMessage = e.response?.data?.message || e.response?.data;
+      alert(serverMessage || "결제 중 오류가 발생했습니다.");
     }
     isPaying.value = false;
   }
