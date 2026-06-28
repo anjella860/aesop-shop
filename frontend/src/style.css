@@ -1,0 +1,177 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Noto+Serif+KR:wght@300;400;500&display=swap");
+
+/* =============================================
+   컬러 변수
+============================================= */
+:root {
+  /* 메인 컬러 */
+  --color-bg: #fafaf7;
+  --color-olive: #3d4a2e;
+  --color-olive-light: #5c6e42;
+  --color-gold: #c9a84c;
+  --color-gold-light: #e2c97e;
+
+  /* 텍스트 */
+  --color-text: #2c2c2c;
+  --color-text-sub: #8a8a8a;
+  --color-text-light: #b0b0b0;
+
+  /* 보더/라인 */
+  --color-border: #d4d9c8;
+  --color-border-light: #eceee8;
+
+  /* 기타 */
+  --color-white: #ffffff;
+  --color-black: #1a1a1a;
+
+  /* 폰트 */
+  --font-en: "Cormorant Garamond", serif;
+  --font-kr: "Noto Serif KR", serif;
+
+  /* 간격 */
+  --container-width: 1280px;
+  --header-height: 80px;
+}
+
+/* =============================================
+   리셋
+============================================= */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-kr);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+
+input,
+textarea {
+  font-family: inherit;
+  outline: none;
+}
+
+/* =============================================
+   공통 레이아웃
+============================================= */
+.container {
+  max-width: var(--container-width);
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+/* =============================================
+   공통 버튼
+============================================= */
+.btn-primary {
+  display: inline-block;
+  padding: 14px 40px;
+  background-color: var(--color-olive);
+  color: var(--color-white);
+  font-family: var(--font-en);
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-olive-light);
+}
+
+.btn-outline {
+  display: inline-block;
+  padding: 13px 40px;
+  border: 1px solid var(--color-olive);
+  color: var(--color-olive);
+  font-family: var(--font-en);
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.btn-outline:hover {
+  background-color: var(--color-olive);
+  color: var(--color-white);
+}
+
+.btn-gold {
+  display: inline-block;
+  padding: 14px 40px;
+  background-color: var(--color-gold);
+  color: var(--color-white);
+  font-family: var(--font-en);
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: background-color 0.3s ease;
+}
+
+.btn-gold:hover {
+  background-color: var(--color-gold-light);
+}
+
+/* =============================================
+   공통 섹션 타이틀
+============================================= */
+.section-title {
+  font-family: var(--font-en);
+  font-size: 36px;
+  font-weight: 300;
+  color: var(--color-olive);
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+
+.section-subtitle {
+  font-size: 14px;
+  color: var(--color-text-sub);
+  letter-spacing: 1px;
+  margin-bottom: 40px;
+}
+
+/* =============================================
+   공통 구분선
+============================================= */
+.divider {
+  width: 40px;
+  height: 1px;
+  background-color: var(--color-gold);
+  margin: 16px 0;
+}
