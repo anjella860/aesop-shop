@@ -1,8 +1,10 @@
 package com.aesop.shop.service;
 
-import com.aeshop.shop.entity.*;
-import com.aeshop.shop.repository.*;
-import com.aesop.shop.entity.*;
+import com.aesop.shop.entity.Cart;
+import com.aesop.shop.entity.OrderItem;
+import com.aesop.shop.entity.OrderStatus;
+import com.aesop.shop.entity.Orders;
+import com.aesop.shop.entity.Product;
 import com.aesop.shop.repository.CartRepository;
 import com.aesop.shop.repository.OrderItemRepository;
 import com.aesop.shop.repository.OrdersRepository;
@@ -17,35 +19,35 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OrderService {
 
+    private static final int FREE_SHIPPING_THRESHOLD = 50000;
+    private static final int SHIPPING_FEE = 3000;
+
     private final OrdersRepository ordersRepository;
     private final OrderItemRepository orderItemRepository;
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
 
-    // 주문하기
     @Transactional
     public Orders createOrder(Long memberId, String receiverName,
                               String receiverPhone, String receiverAddress,
                               String paymentMethod) {
 
-        // 장바구니 목록 조회
         List<Cart> cartList = cartRepository.findByMemberId(memberId);
         if (cartList.isEmpty()) {
-            throw new RuntimeException("장바구니가 비어있습니다.");
+            throw new RuntimeException("Cart is empty.");
         }
 
-        // 총 금액 계산
-        int totalPrice = 0;
+        int productTotal = 0;
         for (Cart cart : cartList) {
             Product product = productRepository.findById(cart.getProductId())
-                    .orElseThrow(() -> new RuntimeException("상품이 존재하지 않습니다."));
+                    .orElseThrow(() -> new RuntimeException("Product not found."));
             if (product.getStock() < cart.getQuantity()) {
-                throw new RuntimeException(product.getName() + " 재고가 부족합니다.");
+                throw new RuntimeException(product.getName() + " is out of stock.");
             }
-            totalPrice += product.getPrice() * cart.getQuantity();
+            productTotal += product.getPrice() * cart.getQuantity();
         }
 
-        // 주문 생성
+        int totalPrice = productTotal + calculateShippingFee(productTotal);
         Orders order = Orders.builder()
                 .memberId(memberId)
                 .totalPrice(totalPrice)
@@ -57,7 +59,6 @@ public class OrderService {
                 .build();
         ordersRepository.save(order);
 
-        // 주문 상세 생성 + 재고 차감
         for (Cart cart : cartList) {
             Product product = productRepository.findById(cart.getProductId()).get();
             OrderItem orderItem = OrderItem.builder()
@@ -67,50 +68,98 @@ public class OrderService {
                     .price(product.getPrice())
                     .build();
             orderItemRepository.save(orderItem);
-            // 재고 차감
-            product.setStock(product.getStock() - cart.getQuantity());
-            productRepository.save(product);
         }
-
-        // 장바구니 비우기
-        cartRepository.deleteByMemberId(memberId);
 
         return order;
     }
 
-    // 내 주문 목록 조회
     public List<Orders> findByMemberId(Long memberId) {
         return ordersRepository.findByMemberIdOrderByOrderedAtDesc(memberId);
     }
 
-    // 주문 상세 조회
     public Orders findById(Long id) {
         return ordersRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("주문이 존재하지 않습니다."));
+                .orElseThrow(() -> new RuntimeException("Order not found."));
     }
 
-    // 주문 취소
+    public Orders findByIdAndMemberId(Long id, Long memberId) {
+        return ordersRepository.findByIdAndMemberId(id, memberId)
+                .orElseThrow(() -> new RuntimeException("Order not found."));
+    }
+
+    @Transactional
+    public void confirmPaidOrder(Long orderId, Long memberId) {
+        Orders order = findByIdAndMemberId(orderId, memberId);
+        if (order.getStatus() == OrderStatus.CONFIRMED) {
+            return;
+        }
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new RuntimeException("Order cannot be confirmed.");
+        }
+
+        List<OrderItem> items = orderItemRepository.findByOrderId(orderId);
+        for (OrderItem item : items) {
+            Product product = productRepository.findById(item.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Product not found."));
+            if (product.getStock() < item.getQuantity()) {
+                throw new RuntimeException(product.getName() + " is out of stock.");
+            }
+        }
+
+        for (OrderItem item : items) {
+            Product product = productRepository.findById(item.getProductId()).get();
+            product.setStock(product.getStock() - item.getQuantity());
+            productRepository.save(product);
+        }
+
+        order.setStatus(OrderStatus.CONFIRMED);
+        ordersRepository.save(order);
+        cartRepository.deleteByMemberId(memberId);
+    }
+
+    @Transactional
+    public void cancelOrder(Long id, Long memberId) {
+        Orders order = findByIdAndMemberId(id, memberId);
+        cancel(order);
+    }
+
+    @Transactional
     public void cancelOrder(Long id) {
-        Orders order = ordersRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("주문이 존재하지 않습니다."));
-        if (order.getStatus() != OrderStatus.PENDING &&
-                order.getStatus() != OrderStatus.CONFIRMED) {
-            throw new RuntimeException("배송 중인 주문은 취소할 수 없습니다.");
+        Orders order = findById(id);
+        cancel(order);
+    }
+
+    public List<Orders> findAll() {
+        return ordersRepository.findAll();
+    }
+
+    public void changeStatus(Long id, OrderStatus status) {
+        Orders order = findById(id);
+        order.setStatus(status);
+        ordersRepository.save(order);
+    }
+
+    private void cancel(Orders order) {
+        if (order.getStatus() != OrderStatus.PENDING && order.getStatus() != OrderStatus.CONFIRMED) {
+            throw new RuntimeException("Order cannot be cancelled.");
+        }
+        if (order.getStatus() == OrderStatus.CONFIRMED) {
+            restoreStock(order.getId());
         }
         order.setStatus(OrderStatus.CANCELLED);
         ordersRepository.save(order);
     }
 
-    // 전체 주문 목록 (관리자)
-    public List<Orders> findAll() {
-        return ordersRepository.findAll();
+    private void restoreStock(Long orderId) {
+        List<OrderItem> items = orderItemRepository.findByOrderId(orderId);
+        for (OrderItem item : items) {
+            Product product = productRepository.findById(item.getProductId()).get();
+            product.setStock(product.getStock() + item.getQuantity());
+            productRepository.save(product);
+        }
     }
 
-    // 주문 상태 변경 (관리자)
-    public void changeStatus(Long id, OrderStatus status) {
-        Orders order = ordersRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("주문이 존재하지 않습니다."));
-        order.setStatus(status);
-        ordersRepository.save(order);
+    private int calculateShippingFee(int productTotal) {
+        return productTotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
     }
 }

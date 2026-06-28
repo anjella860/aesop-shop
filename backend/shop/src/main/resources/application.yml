@@ -2,11 +2,8 @@ server:
   port: 8080
 
 spring:
-  application:
-    name: shop
-
   datasource:
-    url: jdbc:postgresql://localhost:5432/shop
+    url: jdbc:postgresql://localhost:5432/aesop_shop
     username: postgres
     password: 1004
 
@@ -18,7 +15,16 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
       show-sql: true
+    defer-datasource-initialization: true
   security:
     user:
       name: admin
       password: 1234
+  sql:
+    init:
+      mode: always
+
+# 토스페이먼츠 설정 (테스트 키)
+toss:
+  secret-key: test_sk_docs_OePExZgl2KJXBKLJRb8gLzN97Eo2
+  # 실제 배포 시 반드시 본인의 시크릿 키로 교체하세요
