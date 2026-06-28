@@ -71,4 +71,23 @@ export const noticeAPI = {
   getById: (id) => api.get(`/api/notice/${id}`),
 };
 
+// 관리자 API
+export const adminAPI = {
+  getMembers: () => api.get("/admin/members"),
+  changeMemberRole: (id, role) => api.put(`/admin/members/${id}/role`, null, { params: { role } }),
+  deleteMember: (id) => api.delete(`/admin/members/${id}`),
+  addProduct: (data) => api.post("/admin/products", data, {
+    headers: { "Content-Type": "multipart/form-data" },
+  }),
+  updateProduct: (id, data) => api.put(`/admin/products/${id}`, data, {
+    headers: { "Content-Type": "multipart/form-data" },
+  }),
+  deleteProduct: (id) => api.delete(`/admin/products/${id}`),
+  getOrders: () => api.get("/admin/orders"),
+  changeOrderStatus: (id, status) => api.put(`/admin/orders/${id}/status`, null, { params: { status } }),
+  addNotice: (data) => api.post("/admin/notice", data),
+  updateNotice: (id, data) => api.put(`/admin/notice/${id}`, data),
+  deleteNotice: (id) => api.delete(`/admin/notice/${id}`),
+};
+
 export default api;

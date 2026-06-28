@@ -37,10 +37,12 @@ const routes = [
     path: "/payment/fail",
     component: () => import("../pages/PaymentResultPage.vue"),
   },
-
   // 고객센터
   { path: "/qna", component: () => import("../pages/QnaPage.vue") },
   { path: "/notice", component: () => import("../pages/NoticePage.vue") },
+
+  // 관리자
+  { path: "/admin", component: () => import("../pages/AdminDashboardPage.vue") },
 ];
 
 const router = createRouter({

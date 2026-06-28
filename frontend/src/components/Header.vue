@@ -20,6 +20,7 @@
 
       <!-- 우측 아이콘 -->
       <div class="header__actions">
+        <RouterLink to="/admin" class="action-icon" title="관리자">관리자</RouterLink>
         <RouterLink to="/login" class="action-icon" title="로그인">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -84,6 +85,10 @@
       <RouterLink to="/gifts" class="mobile-nav-item" @click="closeMenu"
         >기프트</RouterLink
       >
+      <RouterLink to="/admin" class="mobile-nav-item" @click="closeMenu"
+        >관리자</RouterLink
+      >
+
       <RouterLink to="/login" class="mobile-nav-item" @click="closeMenu"
         >로그인</RouterLink
       >

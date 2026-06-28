@@ -35,7 +35,7 @@ const fb = "https://via.placeholder.com/400x480/3D4A2E/FAFAF7?text=AESOP";
 const err = (e) => { e.target.src = fb; };
 const go = (id) => router.push(`/product/${id}`);
 onMounted(async () => {
-  try { const res = await productAPI.getByCategory(5); products.value = res.data; } catch(e) {}
+  try { const res = await productAPI.getBestsellers(); products.value = res.data; } catch(e) {}
 });
 </script>
 <style scoped>

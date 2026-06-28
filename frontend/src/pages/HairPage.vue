@@ -27,14 +27,14 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { productAPI } from "../api/index.js";
+import { loadProductsForCategory } from "../utils/categoryProducts.js";
 const router = useRouter();
 const products = ref([]);
 const fb = "https://via.placeholder.com/400x480/3D4A2E/FAFAF7?text=AESOP";
 const err = (e) => { e.target.src = fb; };
 const go = (id) => router.push(`/product/${id}`);
 onMounted(async () => {
-  try { const res = await productAPI.getByCategory(4); products.value = res.data; } catch(e) {}
+  try { products.value = await loadProductsForCategory(2); } catch(e) {}
 });
 </script>
 <style scoped>
@@ -55,3 +55,4 @@ onMounted(async () => {
 .empty { text-align: center; padding: 80px 0; color: var(--color-text-sub); font-size: 14px; }
 @media (max-width: 1024px) { .product-grid { grid-template-columns: repeat(2, 1fr); } }
 </style>
+

@@ -40,7 +40,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { productAPI } from "../api/index.js";
+import { loadProductsForCategory } from "../utils/categoryProducts.js";
 
 const router = useRouter();
 const products = ref([]);
@@ -52,9 +52,7 @@ const goToProduct = (id) => router.push(`/product/${id}`);
 
 onMounted(async () => {
   try {
-    // categoryId=1 이 스킨케어라고 가정 (실제 DB에 맞게 수정)
-    const res = await productAPI.getByCategory(1);
-    products.value = res.data;
+    products.value = await loadProductsForCategory(1);
   } catch (e) {
     console.error(e);
   }
@@ -158,3 +156,5 @@ onMounted(async () => {
 @media (max-width: 1024px) { .product-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 640px) { .product-grid { grid-template-columns: 1fr 1fr; } }
 </style>
+
+
