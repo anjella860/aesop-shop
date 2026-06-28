@@ -1,166 +1,235 @@
 <template>
   <main class="admin-page">
-    <section class="admin-hero">
-      <div>
-        <p class="eyebrow">Admin</p>
-        <h1>관리자 대시보드</h1>
-        <p class="hero-copy">상품, 주문, 회원, 공지사항을 한 화면에서 관리합니다.</p>
-      </div>
-      <button class="refresh-btn" type="button" @click="loadDashboard" :disabled="loading">
-        {{ loading ? "불러오는 중" : "새로고침" }}
-      </button>
-    </section>
+    <aside class="admin-sidebar" aria-label="관리자 메뉴">
+      <RouterLink to="/" class="sidebar-brand">
+        <span>AESOP</span>
+        <strong>ADMIN</strong>
+      </RouterLink>
 
-    <p v-if="errorMessage" class="alert">{{ errorMessage }}</p>
+      <nav class="sidebar-nav">
+        <button
+          v-for="tab in adminTabs"
+          :key="tab.key"
+          class="sidebar-nav__item"
+          :class="{ active: activeTab === tab.key }"
+          type="button"
+          @click="activeTab = tab.key"
+        >
+          <span>{{ tab.label }}</span>
+          <strong v-if="tab.count !== null">{{ tab.count }}</strong>
+        </button>
+      </nav>
+    </aside>
 
-    <section class="summary-grid">
-      <article class="summary-card">
-        <span>상품</span>
-        <strong>{{ products.length }}</strong>
-      </article>
-      <article class="summary-card">
-        <span>주문</span>
-        <strong>{{ orders.length }}</strong>
-      </article>
-      <article class="summary-card">
-        <span>회원</span>
-        <strong>{{ members.length }}</strong>
-      </article>
-      <article class="summary-card">
-        <span>재고 부족</span>
-        <strong>{{ lowStockProducts.length }}</strong>
-      </article>
-      <article class="summary-card">
-        <span>미답변 QnA</span>
-        <strong>{{ unansweredQnas.length }}</strong>
-      </article>
-    </section>
-
-    <section class="admin-section product-editor">
-      <div class="section-heading">
+    <section class="admin-workspace">
+      <header class="admin-hero">
         <div>
-          <p class="eyebrow">Products</p>
-          <h2>상품 관리</h2>
+          <p class="eyebrow">Admin</p>
+          <h1>{{ activeTabLabel }}</h1>
+          <p class="hero-copy">{{ activeTabDescription }}</p>
         </div>
-        <button class="ghost-btn" type="button" @click="resetProductForm">새 상품</button>
-      </div>
+        <button class="refresh-btn" type="button" @click="loadDashboard" :disabled="loading">
+          {{ loading ? "불러오는 중" : "새로고침" }}
+        </button>
+      </header>
 
-      <form class="product-form" @submit.prevent="saveProduct">
-        <label>
-          상품명
-          <input v-model.trim="productForm.name" required />
-        </label>
-        <label>
-          카테고리
-          <select v-model.number="productForm.categoryId" required>
-            <option v-for="category in childCategories" :key="category.id" :value="category.id">
-              {{ category.name }}
-            </option>
-          </select>
-        </label>
-        <label>
-          용량
-          <input v-model.trim="productForm.volume" placeholder="100ml" />
-        </label>
-        <label>
-          가격
-          <input v-model.number="productForm.price" type="number" min="0" required />
-        </label>
-        <label>
-          재고
-          <input v-model.number="productForm.stock" type="number" min="0" required />
-        </label>
-        <label>
-          피부 타입
-          <input v-model.trim="productForm.skinType" />
-        </label>
-        <label class="wide">
-          주요 성분
-          <input v-model.trim="productForm.ingredients" />
-        </label>
-        <label class="wide">
-          설명
-          <textarea v-model.trim="productForm.description" rows="3"></textarea>
-        </label>
-        <label class="check-row">
-          <input v-model="productForm.isBestseller" type="checkbox" />
-          베스트셀러
-        </label>
-        <div class="form-actions">
-          <button class="primary-btn" type="submit">{{ productForm.id ? "상품 수정" : "상품 등록" }}</button>
+      <p v-if="errorMessage" class="alert">{{ errorMessage }}</p>
+
+      <section v-if="activeTab === 'overview'" class="tab-panel">
+        <div class="summary-grid">
+          <button class="summary-card" type="button" @click="activeTab = 'products'">
+            <span>상품</span>
+            <strong>{{ products.length }}</strong>
+          </button>
+          <button class="summary-card" type="button" @click="activeTab = 'orders'">
+            <span>주문</span>
+            <strong>{{ orders.length }}</strong>
+          </button>
+          <button class="summary-card" type="button" @click="activeTab = 'members'">
+            <span>회원</span>
+            <strong>{{ members.length }}</strong>
+          </button>
+          <button class="summary-card" type="button" @click="activeTab = 'products'">
+            <span>재고 부족</span>
+            <strong>{{ lowStockProducts.length }}</strong>
+          </button>
+          <button class="summary-card" type="button" @click="activeTab = 'qna'">
+            <span>미답변 QnA</span>
+            <strong>{{ unansweredQnas.length }}</strong>
+          </button>
         </div>
-      </form>
 
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>상품</th>
-              <th>카테고리</th>
-              <th>가격</th>
-              <th>재고</th>
-              <th>관리</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="product in products" :key="product.id">
-              <td>
-                <div class="product-cell">
-                  <img :src="product.imageUrl || fallbackImg" :alt="product.name" @error="onImgError" />
-                  <span>{{ product.name }}</span>
+        <div class="overview-grid">
+          <section class="admin-section">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Inventory</p>
+                <h2>재고 확인</h2>
+              </div>
+              <button class="ghost-btn" type="button" @click="activeTab = 'products'">상품 관리</button>
+            </div>
+            <div class="list-stack">
+              <div class="list-row" v-for="product in lowStockProducts.slice(0, 5)" :key="product.id">
+                <div>
+                  <strong>{{ product.name }}</strong>
+                  <span>{{ categoryName(product.categoryId) }}</span>
                 </div>
-              </td>
-              <td>{{ categoryName(product.categoryId) }}</td>
-              <td>{{ formatPrice(product.price) }}</td>
-              <td :class="{ danger: product.stock <= 10 }">{{ product.stock }}</td>
-              <td class="actions">
-                <button type="button" @click="editProduct(product)">수정</button>
-                <button type="button" @click="removeProduct(product.id)">삭제</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+                <em>{{ product.stock }}개</em>
+              </div>
+              <p v-if="lowStockProducts.length === 0" class="empty">재고 부족 상품이 없습니다.</p>
+            </div>
+          </section>
 
-    <section class="admin-grid">
-      <article class="admin-section">
+          <section class="admin-section">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">QnA</p>
+                <h2>미답변 문의</h2>
+              </div>
+              <button class="ghost-btn" type="button" @click="activeTab = 'qna'">답변 관리</button>
+            </div>
+            <div class="list-stack">
+              <div class="list-row" v-for="qna in unansweredQnas.slice(0, 5)" :key="qna.id">
+                <div>
+                  <strong>{{ qna.title }}</strong>
+                  <span>{{ productName(qna.productId) }}</span>
+                </div>
+                <em>{{ formatDate(qna.createdAt) }}</em>
+              </div>
+              <p v-if="unansweredQnas.length === 0" class="empty">미답변 문의가 없습니다.</p>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section v-if="activeTab === 'products'" class="tab-panel admin-section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Products</p>
+            <h2>상품 관리</h2>
+          </div>
+          <button class="ghost-btn" type="button" @click="resetProductForm">새 상품</button>
+        </div>
+
+        <form class="product-form" @submit.prevent="saveProduct">
+          <label>
+            상품명
+            <input v-model.trim="productForm.name" required />
+          </label>
+          <label>
+            카테고리
+            <select v-model.number="productForm.categoryId" required>
+              <option v-for="category in childCategories" :key="category.id" :value="category.id">
+                {{ category.name }}
+              </option>
+            </select>
+          </label>
+          <label>
+            용량
+            <input v-model.trim="productForm.volume" placeholder="100ml" />
+          </label>
+          <label>
+            가격
+            <input v-model.number="productForm.price" type="number" min="0" required />
+          </label>
+          <label>
+            재고
+            <input v-model.number="productForm.stock" type="number" min="0" required />
+          </label>
+          <label>
+            피부 타입
+            <input v-model.trim="productForm.skinType" />
+          </label>
+          <label class="wide">
+            주요 성분
+            <input v-model.trim="productForm.ingredients" />
+          </label>
+          <label class="wide">
+            설명
+            <textarea v-model.trim="productForm.description" rows="3"></textarea>
+          </label>
+          <label class="check-row">
+            <input v-model="productForm.isBestseller" type="checkbox" />
+            베스트셀러
+          </label>
+          <div class="form-actions">
+            <button class="primary-btn" type="submit">{{ productForm.id ? "상품 수정" : "상품 등록" }}</button>
+          </div>
+        </form>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>상품</th>
+                <th>카테고리</th>
+                <th>가격</th>
+                <th>재고</th>
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="product in products" :key="product.id">
+                <td>
+                  <div class="product-cell">
+                    <img :src="product.imageUrl || fallbackImg" :alt="product.name" @error="onImgError" />
+                    <span>{{ product.name }}</span>
+                  </div>
+                </td>
+                <td>{{ categoryName(product.categoryId) }}</td>
+                <td>{{ formatPrice(product.price) }}</td>
+                <td :class="{ danger: product.stock <= 10 }">{{ product.stock }}</td>
+                <td class="actions">
+                  <button type="button" @click="editProduct(product)">수정</button>
+                  <button type="button" @click="removeProduct(product.id)">삭제</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section v-if="activeTab === 'orders'" class="tab-panel admin-section">
         <div class="section-heading">
           <div>
             <p class="eyebrow">Orders</p>
             <h2>주문 관리</h2>
           </div>
         </div>
-        <div class="table-wrap compact">
+        <div class="table-wrap">
           <table>
             <thead>
               <tr>
                 <th>주문</th>
                 <th>수령인</th>
+                <th>연락처</th>
                 <th>금액</th>
                 <th>상태</th>
+                <th>주문일</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="order in orders" :key="order.id">
                 <td>#{{ order.id }}</td>
                 <td>{{ order.receiverName }}</td>
+                <td>{{ order.receiverPhone }}</td>
                 <td>{{ formatPrice(order.totalPrice) }}</td>
                 <td>
                   <select :value="order.status" @change="changeOrderStatus(order.id, $event.target.value)">
                     <option v-for="status in orderStatuses" :key="status" :value="status">{{ status }}</option>
                   </select>
                 </td>
+                <td>{{ formatDate(order.orderedAt) }}</td>
               </tr>
               <tr v-if="orders.length === 0">
-                <td colspan="4" class="empty">주문이 없습니다.</td>
+                <td colspan="6" class="empty">주문이 없습니다.</td>
               </tr>
             </tbody>
           </table>
         </div>
-      </article>
+      </section>
 
-      <article class="admin-section">
+      <section v-if="activeTab === 'members'" class="tab-panel admin-section">
         <div class="section-heading">
           <div>
             <p class="eyebrow">Members</p>
@@ -173,6 +242,7 @@
               <strong>{{ member.name }}</strong>
               <span>{{ member.email }}</span>
             </div>
+            <span>{{ member.phone || "연락처 없음" }}</span>
             <select :value="member.role" @change="changeMemberRole(member.id, $event.target.value)">
               <option value="USER">USER</option>
               <option value="ADMIN">ADMIN</option>
@@ -181,69 +251,67 @@
           </div>
           <p v-if="members.length === 0" class="empty">회원이 없습니다.</p>
         </div>
-      </article>
-    </section>
+      </section>
 
-    <section class="admin-section">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">QnA</p>
-          <h2>QnA 답변 관리</h2>
-        </div>
-      </div>
-      <div class="qna-list">
-        <article class="qna-card" v-for="qna in qnas" :key="qna.id">
-          <div class="qna-card__head">
-            <span class="status-badge" :class="qna.isAnswered ? 'status--delivered' : 'status--pending'">
-              {{ qna.isAnswered ? "답변완료" : "답변대기" }}
-            </span>
-            <strong>{{ qna.title }}</strong>
-            <small>{{ formatDate(qna.createdAt) }}</small>
-          </div>
-          <p class="qna-meta">
-            상품 {{ productName(qna.productId) }} · 회원 #{{ qna.memberId }}
-          </p>
-          <p class="qna-content">{{ qna.content }}</p>
-          <div v-if="qna.isAnswered" class="qna-answer">
-            <span>답변</span>
-            <p>{{ qna.answer }}</p>
-          </div>
-          <form v-else class="qna-answer-form" @submit.prevent="submitQnaAnswer(qna.id)">
-            <textarea v-model.trim="answerMap[qna.id]" rows="3" placeholder="답변을 입력하세요" required></textarea>
-            <button class="primary-btn" type="submit">답변 등록</button>
-          </form>
-        </article>
-        <p v-if="qnas.length === 0" class="empty">등록된 QnA가 없습니다.</p>
-      </div>
-    </section>
-
-    <section class="admin-section">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Notice</p>
-          <h2>공지사항 관리</h2>
-        </div>
-        <button class="ghost-btn" type="button" @click="resetNoticeForm">새 공지</button>
-      </div>
-      <form class="notice-form" @submit.prevent="saveNotice">
-        <input v-model.trim="noticeForm.title" placeholder="제목" required />
-        <input v-model.trim="noticeForm.author" placeholder="작성자" required />
-        <textarea v-model.trim="noticeForm.content" placeholder="내용" rows="4" required></textarea>
-        <button class="primary-btn" type="submit">{{ noticeForm.id ? "공지 수정" : "공지 등록" }}</button>
-      </form>
-      <div class="notice-list">
-        <div class="notice-row" v-for="notice in notices" :key="notice.id">
+      <section v-if="activeTab === 'qna'" class="tab-panel admin-section">
+        <div class="section-heading">
           <div>
-            <strong>{{ notice.title }}</strong>
-            <span>{{ notice.author }} · 조회 {{ notice.hits }}</span>
-          </div>
-          <div class="actions">
-            <button type="button" @click="editNotice(notice)">수정</button>
-            <button type="button" @click="removeNotice(notice.id)">삭제</button>
+            <p class="eyebrow">QnA</p>
+            <h2>QnA 답변 관리</h2>
           </div>
         </div>
-        <p v-if="notices.length === 0" class="empty">공지사항이 없습니다.</p>
-      </div>
+        <div class="qna-list">
+          <article class="qna-item" v-for="qna in qnas" :key="qna.id">
+            <div class="qna-item__head">
+              <span class="status-badge" :class="qna.isAnswered ? 'status--delivered' : 'status--pending'">
+                {{ qna.isAnswered ? "답변완료" : "답변대기" }}
+              </span>
+              <strong>{{ qna.title }}</strong>
+              <small>{{ formatDate(qna.createdAt) }}</small>
+            </div>
+            <p class="qna-meta">상품 {{ productName(qna.productId) }} · 회원 #{{ qna.memberId }}</p>
+            <p class="qna-content">{{ qna.content }}</p>
+            <div v-if="qna.isAnswered" class="qna-answer">
+              <span>답변</span>
+              <p>{{ qna.answer }}</p>
+            </div>
+            <form v-else class="qna-answer-form" @submit.prevent="submitQnaAnswer(qna.id)">
+              <textarea v-model.trim="answerMap[qna.id]" rows="3" placeholder="답변을 입력하세요" required></textarea>
+              <button class="primary-btn" type="submit">답변 등록</button>
+            </form>
+          </article>
+          <p v-if="qnas.length === 0" class="empty">등록된 QnA가 없습니다.</p>
+        </div>
+      </section>
+
+      <section v-if="activeTab === 'notices'" class="tab-panel admin-section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Notice</p>
+            <h2>공지사항 관리</h2>
+          </div>
+          <button class="ghost-btn" type="button" @click="resetNoticeForm">새 공지</button>
+        </div>
+        <form class="notice-form" @submit.prevent="saveNotice">
+          <input v-model.trim="noticeForm.title" placeholder="제목" required />
+          <input v-model.trim="noticeForm.author" placeholder="작성자" required />
+          <textarea v-model.trim="noticeForm.content" placeholder="내용" rows="4" required></textarea>
+          <button class="primary-btn" type="submit">{{ noticeForm.id ? "공지 수정" : "공지 등록" }}</button>
+        </form>
+        <div class="notice-list">
+          <div class="notice-row" v-for="notice in notices" :key="notice.id">
+            <div>
+              <strong>{{ notice.title }}</strong>
+              <span>{{ notice.author }} · 조회 {{ notice.hits }}</span>
+            </div>
+            <div class="actions">
+              <button type="button" @click="editNotice(notice)">수정</button>
+              <button type="button" @click="removeNotice(notice.id)">삭제</button>
+            </div>
+          </div>
+          <p v-if="notices.length === 0" class="empty">공지사항이 없습니다.</p>
+        </div>
+      </section>
     </section>
   </main>
 </template>
@@ -253,6 +321,7 @@ import { computed, onMounted, reactive, ref } from "vue";
 import { adminAPI, categoryAPI, noticeAPI, productAPI } from "../api/index.js";
 
 const fallbackImg = "https://via.placeholder.com/120x150/3D4A2E/FAFAF7?text=AESOP";
+const activeTab = ref("overview");
 const loading = ref(false);
 const errorMessage = ref("");
 const products = ref([]);
@@ -287,6 +356,19 @@ const noticeForm = reactive({
 const childCategories = computed(() => categories.value.filter((category) => category.parentId));
 const lowStockProducts = computed(() => products.value.filter((product) => product.stock <= 10));
 const unansweredQnas = computed(() => qnas.value.filter((qna) => !qna.isAnswered));
+
+const adminTabs = computed(() => [
+  { key: "overview", label: "대시보드", description: "운영 현황을 빠르게 확인합니다.", count: null },
+  { key: "products", label: "상품 관리", description: "상품 정보와 재고를 등록하고 수정합니다.", count: products.value.length },
+  { key: "orders", label: "주문 관리", description: "주문 상태와 수령 정보를 관리합니다.", count: orders.value.length },
+  { key: "members", label: "회원 관리", description: "회원 권한과 계정을 관리합니다.", count: members.value.length },
+  { key: "qna", label: "QnA 답변", description: "고객 문의를 확인하고 답변합니다.", count: unansweredQnas.value.length },
+  { key: "notices", label: "공지사항", description: "쇼핑몰 공지사항을 작성하고 수정합니다.", count: notices.value.length },
+]);
+
+const activeTabInfo = computed(() => adminTabs.value.find((tab) => tab.key === activeTab.value) || adminTabs.value[0]);
+const activeTabLabel = computed(() => activeTabInfo.value.label);
+const activeTabDescription = computed(() => activeTabInfo.value.description);
 
 const formatPrice = (value) => value ? `${Number(value).toLocaleString()}원` : "0원";
 const categoryName = (id) => categories.value.find((category) => category.id === id)?.name || `#${id}`;
@@ -475,6 +557,7 @@ const editNotice = (notice) => {
     content: notice.content,
     author: notice.author || "관리자",
   });
+  activeTab.value = "notices";
 };
 
 const removeNotice = async (id) => {
@@ -492,27 +575,100 @@ onMounted(loadDashboard);
 
 <style scoped>
 .admin-page {
-  background: var(--color-bg);
+  background: #f6f5ef;
   color: var(--color-text);
-  min-height: 100vh;
-  padding: calc(var(--header-height) + 40px) 40px 80px;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  min-height: calc(100vh - var(--header-height));
+}
+
+.admin-sidebar {
+  background: var(--color-olive);
+  color: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - var(--header-height));
+  padding: 28px 0;
+  position: sticky;
+  top: var(--header-height);
+}
+
+.sidebar-brand {
+  border-bottom: 1px solid rgba(250, 250, 247, 0.14);
+  color: var(--color-bg);
+  display: grid;
+  gap: 8px;
+  padding: 0 26px 28px;
+}
+
+.sidebar-brand span {
+  font-family: var(--font-en);
+  font-size: 22px;
+  letter-spacing: 6px;
+}
+
+.sidebar-brand strong {
+  color: var(--color-gold-light);
+  font-family: var(--font-en);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 3px;
+}
+
+.sidebar-nav {
+  display: grid;
+  gap: 4px;
+  padding: 18px 12px;
+}
+
+.sidebar-nav__item {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: rgba(250, 250, 247, 0.72);
+  display: flex;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 0 14px;
+  text-align: left;
+}
+
+.sidebar-nav__item:hover,
+.sidebar-nav__item.active {
+  background: rgba(250, 250, 247, 0.12);
+  color: var(--color-bg);
+}
+
+.sidebar-nav__item.active {
+  border-left: 2px solid var(--color-gold-light);
+}
+
+.sidebar-nav__item strong {
+  color: var(--color-gold-light);
+  font-family: var(--font-en);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.admin-workspace {
+  min-width: 0;
+  padding: 32px;
 }
 
 .admin-hero,
 .admin-section,
 .summary-card {
-  border: 1px solid var(--color-border);
   background: #fffef9;
+  border: 1px solid var(--color-border);
 }
 
 .admin-hero {
-  max-width: 1280px;
-  margin: 0 auto 24px;
-  padding: 32px;
-  display: flex;
   align-items: center;
-  justify-content: space-between;
+  display: flex;
   gap: 24px;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding: 28px;
 }
 
 .eyebrow {
@@ -530,7 +686,7 @@ h2 {
 }
 
 h1 {
-  font-size: 32px;
+  font-size: 30px;
   margin-bottom: 10px;
 }
 
@@ -544,16 +700,38 @@ h2 {
   font-size: 14px;
 }
 
+.tab-panel {
+  animation: fadeIn 0.16s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .summary-grid {
-  max-width: 1280px;
-  margin: 0 auto 24px;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 16px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-bottom: 24px;
 }
 
 .summary-card {
+  cursor: pointer;
+  display: block;
+  min-height: 112px;
   padding: 22px;
+  text-align: left;
+}
+
+.summary-card:hover {
+  border-color: var(--color-olive);
 }
 
 .summary-card span {
@@ -570,37 +748,29 @@ h2 {
   font-weight: 400;
 }
 
+.overview-grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .admin-section {
-  max-width: 1280px;
-  margin: 0 auto 24px;
   padding: 28px;
 }
 
-.admin-grid {
-  max-width: 1280px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1.25fr 0.75fr;
-  gap: 24px;
-}
-
-.admin-grid .admin-section {
-  margin: 0 0 24px;
-}
-
 .section-heading {
-  display: flex;
   align-items: center;
-  justify-content: space-between;
+  display: flex;
   gap: 20px;
+  justify-content: space-between;
   margin-bottom: 22px;
 }
 
 .product-form,
 .notice-form {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-bottom: 28px;
 }
 
@@ -615,8 +785,8 @@ label {
 input,
 select,
 textarea {
-  border: 1px solid var(--color-border);
   background: var(--color-bg);
+  border: 1px solid var(--color-border);
   color: var(--color-text);
   font: inherit;
   min-height: 42px;
@@ -689,10 +859,6 @@ table {
   width: 100%;
 }
 
-.compact table {
-  min-width: 520px;
-}
-
 th,
 td {
   border-bottom: 1px solid var(--color-border-light);
@@ -730,6 +896,7 @@ th {
   gap: 8px;
 }
 
+.list-stack,
 .member-list,
 .notice-list,
 .qna-list {
@@ -737,24 +904,72 @@ th {
   gap: 10px;
 }
 
-.qna-card {
+.list-row,
+.member-row,
+.notice-row,
+.qna-item {
   border-bottom: 1px solid var(--color-border-light);
-  padding: 18px 0;
+  padding: 14px 0;
 }
 
-.qna-card__head {
+.list-row,
+.member-row,
+.notice-row {
+  align-items: center;
+  display: grid;
+  gap: 12px;
+}
+
+.list-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.member-row {
+  grid-template-columns: minmax(0, 1fr) 160px 120px auto;
+}
+
+.notice-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.list-row strong,
+.member-row strong,
+.notice-row strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 400;
+  margin-bottom: 4px;
+}
+
+.list-row span,
+.member-row span,
+.notice-row span {
+  color: var(--color-text-sub);
+  display: block;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.list-row em {
+  color: var(--color-olive);
+  font-style: normal;
+}
+
+.qna-item__head {
   align-items: center;
   display: flex;
   gap: 12px;
   margin-bottom: 8px;
 }
 
-.qna-card__head strong {
+.qna-item__head strong {
   font-size: 15px;
   font-weight: 400;
 }
 
-.qna-card__head small,
+.qna-item__head small,
 .qna-meta {
   color: var(--color-text-sub);
   font-size: 12px;
@@ -810,59 +1025,57 @@ th {
   color: #2d7a4f;
 }
 
-.member-row,
-.notice-row {
-  align-items: center;
-  border-bottom: 1px solid var(--color-border-light);
-  display: grid;
-  gap: 12px;
-  padding: 12px 0;
-}
-
-.member-row {
-  grid-template-columns: minmax(0, 1fr) 120px auto;
-}
-
-.notice-row {
-  grid-template-columns: minmax(0, 1fr) auto;
-}
-
-.member-row strong,
-.notice-row strong {
-  display: block;
-  font-size: 14px;
-  font-weight: 400;
-  margin-bottom: 4px;
-}
-
-.member-row span,
-.notice-row span {
-  color: var(--color-text-sub);
-  display: block;
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .alert {
   background: #fff4ef;
   border: 1px solid #d99a84;
   color: #8f3f2d;
-  margin: 0 auto 24px;
-  max-width: 1280px;
+  margin-bottom: 24px;
   padding: 14px 16px;
 }
 
-@media (max-width: 1024px) {
-  .admin-page {
-    padding-left: 24px;
-    padding-right: 24px;
+@media (max-width: 1180px) {
+  .summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .summary-grid,
-  .admin-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .overview-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-page {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar {
+    min-height: auto;
+    padding: 18px 0 12px;
+    position: static;
+  }
+
+  .sidebar-brand {
+    padding: 0 20px 18px;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    overflow-x: auto;
+    padding: 12px 14px 4px;
+  }
+
+  .sidebar-nav__item {
+    flex: 0 0 auto;
+    min-width: 132px;
+  }
+
+  .sidebar-nav__item.active {
+    border-left: 0;
+    border-bottom: 2px solid var(--color-gold-light);
+  }
+
+  .admin-workspace {
+    padding: 24px;
   }
 
   .product-form,
@@ -871,9 +1084,9 @@ th {
   }
 }
 
-@media (max-width: 720px) {
-  .admin-page {
-    padding: calc(var(--header-height) + 24px) 16px 56px;
+@media (max-width: 640px) {
+  .admin-workspace {
+    padding: 16px;
   }
 
   .admin-hero,
@@ -883,7 +1096,6 @@ th {
   }
 
   .summary-grid,
-  .admin-grid,
   .product-form,
   .notice-form {
     grid-template-columns: 1fr;
@@ -900,8 +1112,14 @@ th {
   }
 
   .member-row,
-  .notice-row {
+  .notice-row,
+  .qna-item__head {
+    align-items: flex-start;
     grid-template-columns: 1fr;
+  }
+
+  .qna-item__head {
+    flex-direction: column;
   }
 
   h1 {
