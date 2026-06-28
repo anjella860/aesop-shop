@@ -60,6 +60,12 @@
                 <span class="method-label">{{ method.label }}</span>
               </label>
             </div>
+            <div v-if="isBankTransfer" class="bank-transfer-info">
+              <p class="bank-transfer-info__title">입금 계좌</p>
+              <p>국민은행 123456-00-000000</p>
+              <p>예금주: 에이솝 쇼핑몰</p>
+              <small>주문 후 관리자 입금 확인 시 주문 상태가 변경됩니다.</small>
+            </div>
           </section>
         </div>
 
@@ -139,12 +145,15 @@ const form = ref({
   receiverName: "",
   receiverPhone: "",
   receiverAddress: "",
-  paymentMethod: "카드/간편결제",
+  paymentMethod: "카드",
 });
 
 const paymentMethods = [
-  { value: "카드/간편결제", label: "카드/간편결제", icon: "💳" },
+  { value: "카드", label: "카드 결제", icon: "💳" },
+  { value: "무통장입금", label: "무통장입금", icon: "🏦" },
 ];
+
+const isBankTransfer = computed(() => form.value.paymentMethod === "무통장입금");
 
 const totalPrice = computed(() =>
   cartItems.value.reduce((sum, item) => sum + item.price * item.quantity, 0)
@@ -197,7 +206,13 @@ const handlePay = async () => {
     const orderId = String(orderRes.data.id).padStart(6, "0");
     const finalAmount = totalPrice.value + shippingFee.value;
 
-    // 2. 토스페이먼츠 위젯 결제 요청
+    if (isBankTransfer.value) {
+      alert("주문이 접수되었습니다. 안내된 계좌로 입금해주세요.");
+      router.push("/mypage");
+      return;
+    }
+
+    // 2. 토스페이먼츠 카드 결제 요청
     const tossPayments = await loadTossPayments();
 
     await tossPayments.requestPayment("카드", {
@@ -360,6 +375,28 @@ onMounted(() => {
   font-size: 12px;
   letter-spacing: 0.5px;
   color: var(--color-text);
+}
+
+.bank-transfer-info {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  background-color: rgba(61, 74, 46, 0.04);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--color-text);
+}
+
+.bank-transfer-info__title {
+  font-weight: 600;
+  color: var(--color-olive);
+  margin-bottom: 4px;
+}
+
+.bank-transfer-info small {
+  display: block;
+  margin-top: 6px;
+  color: var(--color-text-sub);
 }
 
 /* 주문 요약 */

@@ -70,6 +70,10 @@ public class OrderService {
             orderItemRepository.save(orderItem);
         }
 
+        if ("무통장입금".equals(paymentMethod)) {
+            cartRepository.deleteByMemberId(memberId);
+        }
+
         return order;
     }
 
@@ -97,20 +101,7 @@ public class OrderService {
             throw new RuntimeException("Order cannot be confirmed.");
         }
 
-        List<OrderItem> items = orderItemRepository.findByOrderId(orderId);
-        for (OrderItem item : items) {
-            Product product = productRepository.findById(item.getProductId())
-                    .orElseThrow(() -> new RuntimeException("Product not found."));
-            if (product.getStock() < item.getQuantity()) {
-                throw new RuntimeException(product.getName() + " is out of stock.");
-            }
-        }
-
-        for (OrderItem item : items) {
-            Product product = productRepository.findById(item.getProductId()).get();
-            product.setStock(product.getStock() - item.getQuantity());
-            productRepository.save(product);
-        }
+        deductStock(orderId);
 
         order.setStatus(OrderStatus.CONFIRMED);
         ordersRepository.save(order);
@@ -133,8 +124,16 @@ public class OrderService {
         return ordersRepository.findAll();
     }
 
+    @Transactional
     public void changeStatus(Long id, OrderStatus status) {
         Orders order = findById(id);
+        if (order.getStatus() == OrderStatus.PENDING && status == OrderStatus.CONFIRMED) {
+            deductStock(order.getId());
+            cartRepository.deleteByMemberId(order.getMemberId());
+        }
+        if (order.getStatus() == OrderStatus.CONFIRMED && status == OrderStatus.CANCELLED) {
+            restoreStock(order.getId());
+        }
         order.setStatus(status);
         ordersRepository.save(order);
     }
@@ -158,6 +157,23 @@ public class OrderService {
         }
         order.setStatus(OrderStatus.CANCELLED);
         ordersRepository.save(order);
+    }
+
+    private void deductStock(Long orderId) {
+        List<OrderItem> items = orderItemRepository.findByOrderId(orderId);
+        for (OrderItem item : items) {
+            Product product = productRepository.findById(item.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Product not found."));
+            if (product.getStock() < item.getQuantity()) {
+                throw new RuntimeException(product.getName() + " is out of stock.");
+            }
+        }
+
+        for (OrderItem item : items) {
+            Product product = productRepository.findById(item.getProductId()).get();
+            product.setStock(product.getStock() - item.getQuantity());
+            productRepository.save(product);
+        }
     }
 
     private void restoreStock(Long orderId) {
