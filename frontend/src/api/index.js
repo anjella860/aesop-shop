@@ -53,8 +53,8 @@ export const paymentAPI = {
 
 // 리뷰 API
 export const reviewAPI = {
-  getByProduct: (productId) => api.get(`/api/reviews/product/${productId}`),
-  create: (data) => api.post("/api/reviews", data),
+  getByProduct: (productId) => api.get(`/api/reviews/${productId}`),
+  create: (productId, data) => api.post(`/api/reviews/${productId}`, data),
   delete: (id) => api.delete(`/api/reviews/${id}`),
 };
 

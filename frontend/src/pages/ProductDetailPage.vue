@@ -45,6 +45,7 @@
         <div class="section-header">
           <p class="section-subtitle">REVIEW</p>
           <h2 class="section-title">고객 리뷰</h2>
+          <p class="section-copy">리뷰는 누구나 볼 수 있으며 작성은 로그인 후 가능합니다.</p>
           <div class="divider"></div>
         </div>
 
@@ -67,7 +68,10 @@
             placeholder="이 제품을 사용해 보셨나요? 솔직한 리뷰를 남겨주세요."
             rows="4"
           ></textarea>
-          <button class="btn-review" @click="submitReview">리뷰 등록</button>
+          <div class="review-form__footer">
+            <span>작성과 삭제는 로그인한 회원만 가능합니다.</span>
+            <button class="btn-review" @click="submitReview">리뷰 등록</button>
+          </div>
         </div>
       </div>
     </div>
@@ -133,14 +137,15 @@ const buyNow = async () => {
 const submitReview = async () => {
   if (!newReview.value.trim()) return;
   try {
-    await reviewAPI.create({
-      productId: product.value.id,
+    await reviewAPI.create(product.value.id, {
+      rating: 5,
       content: newReview.value,
     });
     newReview.value = "";
     await fetchReviews();
   } catch (e) {
-    alert("리뷰 등록에 실패했습니다. 로그인이 필요합니다.");
+    alert("리뷰 작성은 로그인이 필요합니다.");
+    router.push({ path: "/login", query: { redirect: route.fullPath } });
   }
 };
 
@@ -362,6 +367,12 @@ onMounted(async () => {
   font-size: 22px;
   font-weight: 300;
   color: var(--color-olive);
+  margin-bottom: 10px;
+}
+
+.section-copy {
+  color: var(--color-text-sub);
+  font-size: 13px;
   margin-bottom: 16px;
 }
 
@@ -437,6 +448,18 @@ onMounted(async () => {
 
 .review-input:focus {
   border-color: var(--color-olive);
+}
+
+.review-form__footer {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.review-form__footer span {
+  color: var(--color-text-sub);
+  font-size: 12px;
 }
 
 .btn-review {

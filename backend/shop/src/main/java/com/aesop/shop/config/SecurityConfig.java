@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -33,8 +34,9 @@ public class SecurityConfig {
                                 "/", "/signup", "/login", "/api/members/signup", "/api/members/login",
                                 "/css/**", "/js/**", "/images/**",
                                 "/api/products/**", "/api/categories/**",
-                                "/api/notice/**", "/api/reviews/*/count"
+                                "/api/notice/**"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/reviews/*", "/api/reviews/*/count").permitAll()
                         .requestMatchers(
                                 "/mypage/**", "/api/members/me", "/api/members/logout",
                                 "/api/orders/**", "/api/payments/**",
