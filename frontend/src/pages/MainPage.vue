@@ -185,7 +185,7 @@ onMounted(() => {
 .hero__bg {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, #2c3820 0%, #3d4a2e 40%, #5c6e42 100%);
+  background: linear-gradient(rgba(31, 38, 26, 0.32), rgba(31, 38, 26, 0.44)), url('/images/banners/hero.png') center/cover no-repeat;
 }
 
 .hero__content {
@@ -323,15 +323,15 @@ onMounted(() => {
 }
 
 .banner-card__bg--skincare {
-  background: linear-gradient(160deg, #4a5e35 0%, #2c3820 100%);
+  background: linear-gradient(rgba(44, 56, 32, 0.08), rgba(44, 56, 32, 0.32)), url('/images/banners/skincare.png') center/cover no-repeat;
 }
 
 .banner-card__bg--fragrance {
-  background: linear-gradient(160deg, #8b7355 0%, #5c4a2e 100%);
+  background: linear-gradient(rgba(44, 56, 32, 0.08), rgba(44, 56, 32, 0.34)), url('/images/banners/fragrance.png') center/cover no-repeat;
 }
 
 .banner-card__bg--handbody {
-  background: linear-gradient(160deg, #3d5a4a 0%, #2a3d35 100%);
+  background: linear-gradient(rgba(44, 56, 32, 0.08), rgba(44, 56, 32, 0.34)), url('/images/banners/body.png') center/cover no-repeat;
 }
 
 .banner-card:hover .banner-card__bg {
