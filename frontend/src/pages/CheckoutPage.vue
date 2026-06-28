@@ -183,6 +183,11 @@ const handlePay = async () => {
     return;
   }
 
+  if (!/^010-?\d{4}-?\d{4}$/.test(receiverPhone)) {
+    alert("연락처는 010-0000-0000 형식으로 입력해주세요.");
+    return;
+  }
+
   if (receiverAddress.length < 5) {
     alert("배송 주소를 정확히 입력해주세요.");
     return;

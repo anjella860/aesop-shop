@@ -121,6 +121,7 @@ const addToCart = async () => {
       productId: product.value.id,
       quantity: quantity.value,
     });
+    window.dispatchEvent(new Event("cart-updated"));
     cartMsg.value = "장바구니에 담겼습니다.";
     setTimeout(() => (cartMsg.value = ""), 2000);
   } catch (e) {

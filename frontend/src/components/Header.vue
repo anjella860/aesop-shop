@@ -20,8 +20,8 @@
 
       <!-- 우측 아이콘 -->
       <div class="header__actions">
-        <RouterLink to="/admin" class="action-icon" title="관리자">관리자</RouterLink>
-        <RouterLink to="/login" class="action-icon" title="로그인">
+        <RouterLink v-if="isAdmin" to="/admin" class="action-icon" title="관리자">관리자</RouterLink>
+        <RouterLink :to="isLoggedIn ? '/mypage' : '/login'" class="action-icon" :title="isLoggedIn ? '마이페이지' : '로그인'">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="20"
@@ -85,12 +85,12 @@
       <RouterLink to="/gifts" class="mobile-nav-item" @click="closeMenu"
         >기프트</RouterLink
       >
-      <RouterLink to="/admin" class="mobile-nav-item" @click="closeMenu"
+      <RouterLink v-if="isAdmin" to="/admin" class="mobile-nav-item" @click="closeMenu"
         >관리자</RouterLink
       >
 
-      <RouterLink to="/login" class="mobile-nav-item" @click="closeMenu"
-        >로그인</RouterLink
+      <RouterLink :to="isLoggedIn ? '/mypage' : '/login'" class="mobile-nav-item" @click="closeMenu"
+        >{{ isLoggedIn ? "마이페이지" : "로그인" }}</RouterLink
       >
       <RouterLink to="/cart" class="mobile-nav-item" @click="closeMenu"
         >장바구니</RouterLink
@@ -100,11 +100,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
+import { useRoute } from "vue-router";
+import { cartAPI, memberAPI } from "../api/index.js";
 
+const route = useRoute();
 const isScrolled = ref(false);
 const menuOpen = ref(false);
 const cartCount = ref(0);
+const isLoggedIn = ref(false);
+const isAdmin = ref(false);
 
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 50;
@@ -118,12 +123,56 @@ const closeMenu = () => {
   menuOpen.value = false;
 };
 
+const loadMember = async () => {
+  try {
+    const response = await memberAPI.getMyInfo();
+    isLoggedIn.value = true;
+    isAdmin.value = response.data.role === "ADMIN";
+  } catch (error) {
+    isLoggedIn.value = false;
+    isAdmin.value = false;
+  }
+};
+
+const loadCartCount = async () => {
+  if (!isLoggedIn.value) {
+    cartCount.value = 0;
+    return;
+  }
+  try {
+    const response = await cartAPI.getCart();
+    cartCount.value = response.data.reduce(
+      (sum, item) => sum + Number(item.quantity || 0),
+      0
+    );
+  } catch (error) {
+    cartCount.value = 0;
+  }
+};
+
+const refreshHeader = async () => {
+  await loadMember();
+  await loadCartCount();
+};
+
 onMounted(() => {
   window.addEventListener("scroll", handleScroll);
+  window.addEventListener("cart-updated", loadCartCount);
+  window.addEventListener("focus", refreshHeader);
+  refreshHeader();
 });
+
+watch(
+  () => route.fullPath,
+  () => {
+    refreshHeader();
+  }
+);
 
 onUnmounted(() => {
   window.removeEventListener("scroll", handleScroll);
+  window.removeEventListener("cart-updated", loadCartCount);
+  window.removeEventListener("focus", refreshHeader);
 });
 </script>
 

@@ -108,6 +108,7 @@ const updateQty = async (item, newQty) => {
   try {
     await cartAPI.updateCart(item.id, { quantity: newQty });
     item.quantity = newQty;
+    window.dispatchEvent(new Event("cart-updated"));
   } catch (e) {
     console.error("수량 변경 실패", e);
   }
@@ -117,6 +118,7 @@ const removeItem = async (id) => {
   try {
     await cartAPI.removeFromCart(id);
     cartItems.value = cartItems.value.filter((item) => item.id !== id);
+    window.dispatchEvent(new Event("cart-updated"));
   } catch (e) {
     console.error("삭제 실패", e);
   }
