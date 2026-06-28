@@ -85,3 +85,13 @@ INSERT INTO product (category_id, name, description, volume, skin_type, ingredie
 INSERT INTO product (category_id, name, description, volume, skin_type, ingredients, price, stock, image_url, is_bestseller, created_at) VALUES
 (18, '포스트 푸 드롭스 룸 스프레이', '상쾌하고 허브 향이 가득한 룸 스프레이입니다.', '100ml', NULL, '파슬리 씨드, 로즈마리, 시더우드', 78000, 30, '/images/products/product-27.png', true, NOW()),
 (18, '인센스 아로마틱 룸 스프레이', '따뜻하고 스파이시한 향의 룸 스프레이입니다.', '100ml', NULL, '클로브, 시나몬, 앰버', 78000, 25, '/images/products/product-28.png', false, NOW());
+
+-- ADMIN TEST ACCOUNT
+INSERT INTO member (name, email, phone, password, role, address, created_at) VALUES
+('관리자', 'admin@test.com', '010-0000-0000', '$2a$10$w3oB4MKY8LeDC.pjj1Nz1etPwPsV72bUjjXYnPW0rbMyfPB2hbjpG', 'ADMIN', '테스트', NOW())
+ON CONFLICT (email) DO UPDATE SET
+  name = EXCLUDED.name,
+  phone = EXCLUDED.phone,
+  password = EXCLUDED.password,
+  role = EXCLUDED.role,
+  address = EXCLUDED.address;
