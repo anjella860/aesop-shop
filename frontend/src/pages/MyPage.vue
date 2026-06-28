@@ -69,11 +69,19 @@
                 <span>결제금액</span>
                 <span>{{ order.totalPrice?.toLocaleString() }}원</span>
               </div>
-              <button
-                v-if="canCancel(order.status)"
-                class="btn-cancel-order"
-                @click="cancelOrder(order.id)"
-              >주문 취소</button>
+              <div class="order-actions">
+                <button
+                  v-if="canPay(order)"
+                  class="btn-pay-order"
+                  :disabled="payingOrderId === order.id"
+                  @click="payOrder(order)"
+                >{{ payingOrderId === order.id ? "처리 중..." : "결제하기" }}</button>
+                <button
+                  v-if="canCancel(order.status)"
+                  class="btn-cancel-order"
+                  @click="cancelOrder(order.id)"
+                >주문 취소</button>
+              </div>
             </div>
           </div>
         </div>
@@ -115,6 +123,9 @@ const router = useRouter();
 const member = ref(null);
 const orders = ref([]);
 const activeTab = ref("orders");
+const payingOrderId = ref(null);
+const TOSS_CLIENT_KEY =
+  import.meta.env.VITE_TOSS_CLIENT_KEY || "test_ck_26DIbXAaVOOZv4EwM2YK3qY50Q9R";
 const updateMsg = ref("");
 const deleteMsg = ref("");
 const deletePassword = ref("");
@@ -137,6 +148,9 @@ const statusLabel = (status) => {
 };
 
 const canCancel = (status) => ["PENDING", "CONFIRMED"].includes(status);
+
+const canPay = (order) =>
+  order.status === "PENDING" && order.paymentMethod?.includes("카드");
 
 const statusClass = (status) => ({
   "status--pending": status === "PENDING",
@@ -169,6 +183,41 @@ const handleDeleteAccount = async () => {
   } catch (e) {
     deleteMsg.value = "회원 탈퇴에 실패했습니다.";
   }
+};
+
+const payOrder = async (order) => {
+  payingOrderId.value = order.id;
+  try {
+    const tossPayments = await loadTossPayments();
+    await tossPayments.requestPayment("카드", {
+      amount: order.totalPrice,
+      orderId: String(order.id).padStart(6, "0"),
+      orderName: `주문번호 #${order.id}`,
+      customerName: order.receiverName,
+      successUrl: `${window.location.origin}/payment/success`,
+      failUrl: `${window.location.origin}/payment/fail`,
+    });
+  } catch (e) {
+    console.error("결제 요청 실패", e);
+    if (e.code !== "USER_CANCEL") {
+      alert(e.message || "결제 중 오류가 발생했습니다.");
+    }
+    payingOrderId.value = null;
+  }
+};
+
+const loadTossPayments = () => {
+  return new Promise((resolve, reject) => {
+    if (window.TossPayments) {
+      resolve(window.TossPayments(TOSS_CLIENT_KEY));
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://js.tosspayments.com/v1/payment";
+    script.onload = () => resolve(window.TossPayments(TOSS_CLIENT_KEY));
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
 };
 
 const cancelOrder = async (id) => {
@@ -385,6 +434,36 @@ onMounted(async () => {
   font-weight: 500;
   padding-top: 10px;
   border-top: 1px solid var(--color-border);
+}
+
+.order-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.btn-pay-order,
+.btn-cancel-order {
+  min-width: 96px;
+  padding: 8px 18px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  font-family: var(--font-kr);
+  font-size: 13px;
+  color: var(--color-olive);
+  cursor: pointer;
+}
+
+.btn-pay-order {
+  background-color: var(--color-olive);
+  border-color: var(--color-olive);
+  color: var(--color-bg);
+}
+
+.btn-pay-order:disabled {
+  opacity: 0.6;
+  cursor: wait;
 }
 
 /* 정보 수정 */
