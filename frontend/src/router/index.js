@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { memberAPI } from "../api/index.js";
 
 const routes = [
   // 메인
@@ -42,7 +43,11 @@ const routes = [
   { path: "/notice", component: () => import("../pages/NoticePage.vue") },
 
   // 관리자
-  { path: "/admin", component: () => import("../pages/AdminDashboardPage.vue") },
+  {
+    path: "/admin",
+    component: () => import("../pages/AdminDashboardPage.vue"),
+    meta: { requiresAdmin: true },
+  },
 ];
 
 const router = createRouter({
@@ -51,6 +56,19 @@ const router = createRouter({
   scrollBehavior() {
     return { top: 0 };
   },
+});
+
+router.beforeEach(async (to) => {
+  if (!to.meta.requiresAdmin) return true;
+
+  try {
+    const response = await memberAPI.getMyInfo();
+    if (response.data.role === "ADMIN") return true;
+  } catch (error) {
+    return { path: "/login", query: { redirect: to.fullPath } };
+  }
+
+  return { path: "/" };
 });
 
 export default router;

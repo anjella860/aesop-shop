@@ -46,10 +46,11 @@
 
 <script setup>
 import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { memberAPI } from "../api/index.js";
 
 const router = useRouter();
+const route = useRoute();
 const isLoading = ref(false);
 const errorMsg = ref("");
 
@@ -63,7 +64,7 @@ const handleLogin = async () => {
   errorMsg.value = "";
   try {
     await memberAPI.login(form.value);
-    router.push("/");
+    router.push(route.query.redirect || "/");
   } catch (e) {
     errorMsg.value = "이메일 또는 비밀번호가 올바르지 않습니다.";
   } finally {
