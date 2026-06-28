@@ -5,6 +5,7 @@ import com.aesop.shop.dto.notice.NoticeRequestDto;
 import com.aesop.shop.dto.notice.NoticeResponseDto;
 import com.aesop.shop.dto.product.ProductRequestDto;
 import com.aesop.shop.dto.product.ProductResponseDto;
+import com.aesop.shop.dto.qna.QnaResponseDto;
 import com.aesop.shop.dto.order.OrderResponseDto;
 import com.aesop.shop.entity.OrderStatus;
 import com.aesop.shop.entity.Product;
@@ -131,6 +132,14 @@ public class AdminController {
     // ========== QnA 관리 ==========
 
     // QnA 답변 등록
+    @GetMapping("/qna")
+    public ResponseEntity<List<QnaResponseDto>> getQnaList() {
+        List<QnaResponseDto> list = qnaService.findAllForAdmin()
+                .stream()
+                .map(QnaResponseDto::new)
+                .toList();
+        return ResponseEntity.ok(list);
+    }
     @PutMapping("/qna/{id}/answer")
     public ResponseEntity<String> answerQna(
             @PathVariable Long id,

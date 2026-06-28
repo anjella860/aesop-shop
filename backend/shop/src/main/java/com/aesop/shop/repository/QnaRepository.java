@@ -18,4 +18,7 @@ public interface QnaRepository extends JpaRepository<Qna, Long> {
 
     // 상품별 QnA 최신순 조회
     List<Qna> findByProductIdOrderByCreatedAtDesc(Long productId);
+
+    // 전체 QnA 최신순 조회 (관리자)
+    List<Qna> findAllByOrderByCreatedAtDesc();
 }

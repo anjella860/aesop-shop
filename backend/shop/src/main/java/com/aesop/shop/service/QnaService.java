@@ -61,6 +61,10 @@ public class QnaService {
         qnaRepository.save(qna);
     }
 
+    // 전체 QnA 목록 (관리자)
+    public List<Qna> findAllForAdmin() {
+        return qnaRepository.findAllByOrderByCreatedAtDesc();
+    }
 
     // 미답변 QnA 목록 (관리자)
     public List<Qna> findUnanswered() {

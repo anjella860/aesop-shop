@@ -30,6 +30,10 @@
         <span>재고 부족</span>
         <strong>{{ lowStockProducts.length }}</strong>
       </article>
+      <article class="summary-card">
+        <span>미답변 QnA</span>
+        <strong>{{ unansweredQnas.length }}</strong>
+      </article>
     </section>
 
     <section class="admin-section product-editor">
@@ -183,6 +187,39 @@
     <section class="admin-section">
       <div class="section-heading">
         <div>
+          <p class="eyebrow">QnA</p>
+          <h2>QnA 답변 관리</h2>
+        </div>
+      </div>
+      <div class="qna-list">
+        <article class="qna-card" v-for="qna in qnas" :key="qna.id">
+          <div class="qna-card__head">
+            <span class="status-badge" :class="qna.isAnswered ? 'status--delivered' : 'status--pending'">
+              {{ qna.isAnswered ? "답변완료" : "답변대기" }}
+            </span>
+            <strong>{{ qna.title }}</strong>
+            <small>{{ formatDate(qna.createdAt) }}</small>
+          </div>
+          <p class="qna-meta">
+            상품 {{ productName(qna.productId) }} · 회원 #{{ qna.memberId }}
+          </p>
+          <p class="qna-content">{{ qna.content }}</p>
+          <div v-if="qna.isAnswered" class="qna-answer">
+            <span>답변</span>
+            <p>{{ qna.answer }}</p>
+          </div>
+          <form v-else class="qna-answer-form" @submit.prevent="submitQnaAnswer(qna.id)">
+            <textarea v-model.trim="answerMap[qna.id]" rows="3" placeholder="답변을 입력하세요" required></textarea>
+            <button class="primary-btn" type="submit">답변 등록</button>
+          </form>
+        </article>
+        <p v-if="qnas.length === 0" class="empty">등록된 QnA가 없습니다.</p>
+      </div>
+    </section>
+
+    <section class="admin-section">
+      <div class="section-heading">
+        <div>
           <p class="eyebrow">Notice</p>
           <h2>공지사항 관리</h2>
         </div>
@@ -223,6 +260,8 @@ const categories = ref([]);
 const members = ref([]);
 const orders = ref([]);
 const notices = ref([]);
+const qnas = ref([]);
+const answerMap = reactive({});
 const orderStatuses = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"];
 
 const productForm = reactive({
@@ -247,9 +286,12 @@ const noticeForm = reactive({
 
 const childCategories = computed(() => categories.value.filter((category) => category.parentId));
 const lowStockProducts = computed(() => products.value.filter((product) => product.stock <= 10));
+const unansweredQnas = computed(() => qnas.value.filter((qna) => !qna.isAnswered));
 
 const formatPrice = (value) => value ? `${Number(value).toLocaleString()}원` : "0원";
 const categoryName = (id) => categories.value.find((category) => category.id === id)?.name || `#${id}`;
+const productName = (id) => products.value.find((product) => product.id === id)?.name || `#${id}`;
+const formatDate = (value) => value ? new Date(value).toLocaleDateString("ko-KR") : "";
 
 const onImgError = (event) => {
   event.target.src = fallbackImg;
@@ -306,18 +348,20 @@ const loadDashboard = async () => {
   loading.value = true;
   errorMessage.value = "";
   try {
-    const [productRes, categoryRes, memberRes, orderRes, noticeRes] = await Promise.all([
+    const [productRes, categoryRes, memberRes, orderRes, noticeRes, qnaRes] = await Promise.all([
       productAPI.getAll(),
       categoryAPI.getAll(),
       adminAPI.getMembers(),
       adminAPI.getOrders(),
       noticeAPI.getAll(),
+      adminAPI.getQna(),
     ]);
     products.value = productRes.data;
     categories.value = categoryRes.data;
     members.value = memberRes.data;
     orders.value = orderRes.data;
     notices.value = noticeRes.data;
+    qnas.value = qnaRes.data;
     if (!productForm.categoryId) resetProductForm();
   } catch (error) {
     showError("관리자 권한이 필요하거나 서버 응답을 불러오지 못했습니다.", error);
@@ -390,6 +434,18 @@ const removeMember = async (id) => {
     await loadDashboard();
   } catch (error) {
     showError("회원 삭제에 실패했습니다.", error);
+  }
+};
+
+const submitQnaAnswer = async (id) => {
+  const answer = answerMap[id];
+  if (!answer) return;
+  try {
+    await adminAPI.answerQna(id, answer);
+    answerMap[id] = "";
+    await loadDashboard();
+  } catch (error) {
+    showError("QnA 답변 등록에 실패했습니다.", error);
   }
 };
 
@@ -492,7 +548,7 @@ h2 {
   max-width: 1280px;
   margin: 0 auto 24px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -675,9 +731,83 @@ th {
 }
 
 .member-list,
-.notice-list {
+.notice-list,
+.qna-list {
   display: grid;
   gap: 10px;
+}
+
+.qna-card {
+  border-bottom: 1px solid var(--color-border-light);
+  padding: 18px 0;
+}
+
+.qna-card__head {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.qna-card__head strong {
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.qna-card__head small,
+.qna-meta {
+  color: var(--color-text-sub);
+  font-size: 12px;
+}
+
+.qna-content {
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 12px 0;
+}
+
+.qna-answer {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border-light);
+  padding: 14px;
+}
+
+.qna-answer span {
+  color: var(--color-gold);
+  display: block;
+  font-size: 11px;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+
+.qna-answer p {
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.qna-answer-form {
+  display: grid;
+  gap: 10px;
+}
+
+.qna-answer-form button {
+  justify-self: start;
+}
+
+.status-badge {
+  display: inline-flex;
+  font-size: 11px;
+  padding: 4px 10px;
+}
+
+.status--pending {
+  background: #f5f0e8;
+  color: #8b7355;
+}
+
+.status--delivered {
+  background: #e8f5ec;
+  color: #2d7a4f;
 }
 
 .member-row,
