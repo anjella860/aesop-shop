@@ -132,6 +132,8 @@ const cartItems = ref([]);
 const isPaying = ref(false);
 const fallbackImg =
   "https://via.placeholder.com/80x80/3D4A2E/FAFAF7?text=AESOP";
+const TOSS_CLIENT_KEY =
+  import.meta.env.VITE_TOSS_CLIENT_KEY || "test_ck_26DIbXAaVOOZv4EwM2YK3qY5OQ9R";
 
 const form = ref({
   receiverName: "",
@@ -213,13 +215,13 @@ const handlePay = async () => {
 const loadTossPayments = () => {
   return new Promise((resolve, reject) => {
     if (window.TossPayments) {
-      resolve(window.TossPayments("test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm"));
+      resolve(window.TossPayments(TOSS_CLIENT_KEY));
       return;
     }
     const script = document.createElement("script");
     script.src = "https://js.tosspayments.com/v2/standard";
     script.onload = () =>
-      resolve(window.TossPayments("test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm"));
+      resolve(window.TossPayments(TOSS_CLIENT_KEY));
     script.onerror = reject;
     document.head.appendChild(script);
   });
