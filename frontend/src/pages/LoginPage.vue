@@ -66,7 +66,8 @@ const handleLogin = async () => {
     await memberAPI.login(form.value);
     router.push(route.query.redirect || "/");
   } catch (e) {
-    errorMsg.value = "이메일 또는 비밀번호가 올바르지 않습니다.";
+    errorMsg.value =
+      e.response?.data?.message || "이메일 또는 비밀번호가 올바르지 않습니다.";
   } finally {
     isLoading.value = false;
   }

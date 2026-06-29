@@ -27,6 +27,10 @@ public class MemberService {
     }
 
     // 이메일로 회원 조회 (Spring Security용)
+    public boolean existsByEmail(String email) {
+        return memberRepository.existsByEmail(email);
+    }
+
     public Member findByEmail(String email) {
         return memberRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
