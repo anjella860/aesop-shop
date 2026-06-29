@@ -57,7 +57,7 @@ public class PaymentApiController {
             @RequestBody Map<String, Object> body) {
         try {
             Long memberId = memberService.findByEmail(userDetails.getUsername()).getId();
-            Long orderId = Long.parseLong(String.valueOf(body.get("orderId")));
+            String orderId = String.valueOf(body.get("orderId"));
             String errorCode = (String) body.get("errorCode");
             String errorMessage = (String) body.get("errorMessage");
 

@@ -132,11 +132,20 @@ const addToCart = async () => {
   }
 };
 
-const buyNow = async () => {
-  const added = await addToCart();
-  if (added) {
-    router.push("/checkout");
-  }
+const buyNow = () => {
+  sessionStorage.setItem(
+    "directCheckoutItem",
+    JSON.stringify({
+      productId: product.value.id,
+      quantity: quantity.value,
+      name: product.value.name,
+      price: product.value.price,
+      volume: product.value.volume,
+      imageUrl: product.value.imageUrl,
+      categoryName: categoryName.value,
+    }),
+  );
+  router.push({ path: "/checkout", query: { mode: "direct" } });
 };
 
 const submitReview = async () => {

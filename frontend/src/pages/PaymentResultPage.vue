@@ -62,6 +62,7 @@ onMounted(async () => {
       if (res.data.success) {
         isSuccess.value = true;
         paymentInfo.value = res.data;
+        sessionStorage.removeItem("directCheckoutItem");
       } else {
         errorMessage.value = res.data.message;
       }
@@ -71,6 +72,7 @@ onMounted(async () => {
   } else if (code) {
     // 실패 콜백
     errorMessage.value = message || "결제가 취소되었습니다.";
+    sessionStorage.removeItem("directCheckoutItem");
     if (orderId) {
       await paymentAPI.fail({
         orderId: String(orderId),

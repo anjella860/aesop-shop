@@ -40,6 +40,10 @@ public class Orders {
     @Column(name = "payment_method", nullable = false, length = 50)
     private String paymentMethod;
 
+    @Builder.Default
+    @Column(name = "direct_order")
+    private Boolean directOrder = false;
+
     @Column(name = "delivery_company", length = 100)
     private String deliveryCompany;
 

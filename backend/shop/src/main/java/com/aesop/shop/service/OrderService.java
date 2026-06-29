@@ -1,5 +1,6 @@
 package com.aesop.shop.service;
 
+import com.aesop.shop.dto.order.OrderRequestDto;
 import com.aesop.shop.entity.Cart;
 import com.aesop.shop.entity.OrderItem;
 import com.aesop.shop.entity.OrderStatus;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -30,21 +32,24 @@ public class OrderService {
     @Transactional
     public Orders createOrder(Long memberId, String receiverName,
                               String receiverPhone, String receiverAddress,
-                              String paymentMethod) {
+                              String paymentMethod,
+                              List<OrderRequestDto.OrderItemRequestDto> requestItems) {
 
-        List<Cart> cartList = cartRepository.findByMemberId(memberId);
-        if (cartList.isEmpty()) {
+        boolean directOrder = requestItems != null && !requestItems.isEmpty();
+        List<OrderLine> orderLines = directOrder
+                ? createOrderLinesFromRequest(requestItems)
+                : createOrderLinesFromCart(memberId);
+
+        if (orderLines.isEmpty()) {
             throw new RuntimeException("Cart is empty.");
         }
 
         int productTotal = 0;
-        for (Cart cart : cartList) {
-            Product product = productRepository.findById(cart.getProductId())
-                    .orElseThrow(() -> new RuntimeException("Product not found."));
-            if (product.getStock() < cart.getQuantity()) {
-                throw new RuntimeException(product.getName() + " is out of stock.");
+        for (OrderLine line : orderLines) {
+            if (line.product().getStock() < line.quantity()) {
+                throw new RuntimeException(line.product().getName() + " is out of stock.");
             }
-            productTotal += product.getPrice() * cart.getQuantity();
+            productTotal += line.product().getPrice() * line.quantity();
         }
 
         int totalPrice = productTotal + calculateShippingFee(productTotal);
@@ -55,23 +60,23 @@ public class OrderService {
                 .receiverPhone(receiverPhone)
                 .receiverAddress(receiverAddress)
                 .paymentMethod(paymentMethod)
+                .directOrder(directOrder)
                 .status(OrderStatus.PENDING)
                 .build();
         ordersRepository.save(order);
 
-        for (Cart cart : cartList) {
-            Product product = productRepository.findById(cart.getProductId()).get();
+        for (OrderLine line : orderLines) {
             OrderItem orderItem = OrderItem.builder()
                     .orderId(order.getId())
-                    .productId(cart.getProductId())
-                    .quantity(cart.getQuantity())
-                    .price(product.getPrice())
+                    .productId(line.product().getId())
+                    .quantity(line.quantity())
+                    .price(line.product().getPrice())
                     .build();
             orderItemRepository.save(orderItem);
         }
 
-        if ("무통장입금".equals(paymentMethod)) {
-            cartRepository.deleteByMemberId(memberId);
+        if (!directOrder && paymentMethod != null && paymentMethod.contains("입금")) {
+            clearCartIfOrderMatchesCart(order.getId(), memberId);
         }
 
         return order;
@@ -105,7 +110,9 @@ public class OrderService {
 
         order.setStatus(OrderStatus.CONFIRMED);
         ordersRepository.save(order);
-        cartRepository.deleteByMemberId(memberId);
+        if (!Boolean.TRUE.equals(order.getDirectOrder())) {
+            clearCartIfOrderMatchesCart(orderId, memberId);
+        }
     }
 
     @Transactional
@@ -129,7 +136,9 @@ public class OrderService {
         Orders order = findById(id);
         if (order.getStatus() == OrderStatus.PENDING && status == OrderStatus.CONFIRMED) {
             deductStock(order.getId());
-            cartRepository.deleteByMemberId(order.getMemberId());
+            if (!Boolean.TRUE.equals(order.getDirectOrder())) {
+                clearCartIfOrderMatchesCart(order.getId(), order.getMemberId());
+            }
         }
         if (order.getStatus() == OrderStatus.CONFIRMED && status == OrderStatus.CANCELLED) {
             restoreStock(order.getId());
@@ -185,7 +194,58 @@ public class OrderService {
         }
     }
 
+    private List<OrderLine> createOrderLinesFromCart(Long memberId) {
+        List<OrderLine> orderLines = new ArrayList<>();
+        List<Cart> cartList = cartRepository.findByMemberId(memberId);
+        for (Cart cart : cartList) {
+            Product product = productRepository.findById(cart.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Product not found."));
+            orderLines.add(new OrderLine(cart.getProductId(), cart.getQuantity(), product));
+        }
+        return orderLines;
+    }
+
+    private List<OrderLine> createOrderLinesFromRequest(
+            List<OrderRequestDto.OrderItemRequestDto> requestItems) {
+        List<OrderLine> orderLines = new ArrayList<>();
+        for (OrderRequestDto.OrderItemRequestDto item : requestItems) {
+            if (item.getProductId() == null || item.getQuantity() == null || item.getQuantity() < 1) {
+                throw new RuntimeException("Invalid order item.");
+            }
+            Product product = productRepository.findById(item.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Product not found."));
+            orderLines.add(new OrderLine(item.getProductId(), item.getQuantity(), product));
+        }
+        return orderLines;
+    }
+
+    private void clearCartIfOrderMatchesCart(Long orderId, Long memberId) {
+        List<Cart> cartList = cartRepository.findByMemberId(memberId);
+        if (cartList.isEmpty()) {
+            return;
+        }
+
+        List<OrderItem> orderItems = orderItemRepository.findByOrderId(orderId);
+        if (cartList.size() != orderItems.size()) {
+            return;
+        }
+
+        for (OrderItem orderItem : orderItems) {
+            boolean matched = cartList.stream().anyMatch(cart ->
+                    cart.getProductId().equals(orderItem.getProductId())
+                            && cart.getQuantity().equals(orderItem.getQuantity()));
+            if (!matched) {
+                return;
+            }
+        }
+
+        cartRepository.deleteByMemberId(memberId);
+    }
+
     private int calculateShippingFee(int productTotal) {
         return productTotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
+    }
+
+    private record OrderLine(Long productId, Integer quantity, Product product) {
     }
 }

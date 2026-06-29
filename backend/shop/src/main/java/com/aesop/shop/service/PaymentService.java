@@ -40,7 +40,7 @@ public class PaymentService {
 
     @Transactional
     public Payment confirmPayment(Long memberId, String paymentKey, String orderId, Integer amount) {
-        Long orderIdLong = Long.parseLong(orderId);
+        Long orderIdLong = parseOrderId(orderId);
         Orders order = ordersRepository.findByIdAndMemberId(orderIdLong, memberId)
                 .orElseThrow(() -> new RuntimeException("Order not found."));
 
@@ -88,19 +88,29 @@ public class PaymentService {
     }
 
     @Transactional
-    public void failPayment(Long memberId, Long orderId, String errorCode, String errorMessage) {
-        ordersRepository.findByIdAndMemberId(orderId, memberId)
+    public void failPayment(Long memberId, String orderId, String errorCode, String errorMessage) {
+        Long orderIdLong = parseOrderId(orderId);
+        ordersRepository.findByIdAndMemberId(orderIdLong, memberId)
                 .orElseThrow(() -> new RuntimeException("Order not found."));
 
         log.warn("Payment failed - orderId: {}, code: {}, message: {}",
                 orderId, errorCode, errorMessage);
 
-        Payment existing = paymentRepository.findByOrderId(orderId).orElse(null);
-        Payment payment = existing != null ? existing : Payment.builder().orderId(orderId).build();
+        Payment existing = paymentRepository.findByOrderId(orderIdLong).orElse(null);
+        Payment payment = existing != null ? existing : Payment.builder().orderId(orderIdLong).build();
         payment.setMethod("UNKNOWN");
         payment.setStatus(PaymentStatus.FAILED);
         payment.setAmount(0);
         paymentRepository.save(payment);
+    }
+
+    private Long parseOrderId(String orderId) {
+        String normalized = orderId;
+        int separatorIndex = orderId.indexOf("-");
+        if (separatorIndex > 0) {
+            normalized = orderId.substring(0, separatorIndex);
+        }
+        return Long.parseLong(normalized);
     }
 
     public Payment findByOrderId(Long memberId, Long orderId) {

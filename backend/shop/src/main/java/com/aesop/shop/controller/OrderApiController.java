@@ -51,7 +51,8 @@ public class OrderApiController {
                 dto.getReceiverName(),
                 dto.getReceiverPhone(),
                 dto.getReceiverAddress(),
-                dto.getPaymentMethod());
+                dto.getPaymentMethod(),
+                dto.getItems());
         return ResponseEntity.ok(new OrderResponseDto(order));
     }
 

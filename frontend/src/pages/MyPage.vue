@@ -10,7 +10,10 @@
       <!-- 회원 정보 -->
       <div class="member-info" v-if="member">
         <div class="member-greeting">
-          <p class="greeting-text">안녕하세요, <strong>{{ member.name }}</strong>님</p>
+          <p class="greeting-text">
+            안녕하세요, <strong>{{ member.name }}</strong
+            >님
+          </p>
           <p class="member-email">{{ member.email }}</p>
         </div>
         <button class="btn-logout" @click="handleLogout">로그아웃</button>
@@ -22,17 +25,23 @@
           class="tab-btn"
           :class="{ active: activeTab === 'orders' }"
           @click="activeTab = 'orders'"
-        >주문 내역</button>
+        >
+          주문 내역
+        </button>
         <button
           class="tab-btn"
           :class="{ active: activeTab === 'profile' }"
           @click="activeTab = 'profile'"
-        >정보 수정</button>
+        >
+          정보 수정
+        </button>
         <button
           class="tab-btn"
           :class="{ active: activeTab === 'withdraw' }"
           @click="activeTab = 'withdraw'"
-        >회원 탈퇴</button>
+        >
+          회원 탈퇴
+        </button>
       </div>
 
       <!-- 주문 내역 탭 -->
@@ -46,7 +55,9 @@
             <div class="order-card__header">
               <div>
                 <span class="order-id">주문번호 #{{ order.id }}</span>
-                <span class="order-date">{{ formatDate(order.orderedAt) }}</span>
+                <span class="order-date">{{
+                  formatDate(order.orderedAt)
+                }}</span>
               </div>
               <span class="order-status" :class="statusClass(order.status)">
                 {{ statusLabel(order.status) }}
@@ -55,15 +66,23 @@
             <div class="order-card__body">
               <div class="order-info-row">
                 <span>배송지</span>
-                <span>{{ order.receiverName }} · {{ order.receiverAddress }}</span>
+                <span
+                  >{{ order.receiverName }} · {{ order.receiverAddress }}</span
+                >
               </div>
               <div class="order-info-row">
                 <span>결제수단</span>
                 <span>{{ order.paymentMethod }}</span>
               </div>
-              <div v-if="order.deliveryCompany || order.trackingNumber" class="order-info-row">
+              <div
+                v-if="order.deliveryCompany || order.trackingNumber"
+                class="order-info-row"
+              >
                 <span>배송정보</span>
-                <span>{{ order.deliveryCompany || '배송사 준비중' }} {{ order.trackingNumber || '' }}</span>
+                <span
+                  >{{ order.deliveryCompany || "배송사 준비중" }}
+                  {{ order.trackingNumber || "" }}</span
+                >
               </div>
               <div class="order-info-row order-total">
                 <span>결제금액</span>
@@ -75,12 +94,16 @@
                   class="btn-pay-order"
                   :disabled="payingOrderId === order.id"
                   @click="payOrder(order)"
-                >{{ payingOrderId === order.id ? "처리 중..." : "결제하기" }}</button>
+                >
+                  {{ payingOrderId === order.id ? "처리 중..." : "결제하기" }}
+                </button>
                 <button
                   v-if="canCancel(order.status)"
                   class="btn-cancel-order"
                   @click="cancelOrder(order.id)"
-                >주문 취소</button>
+                >
+                  주문 취소
+                </button>
               </div>
             </div>
           </div>
@@ -102,13 +125,17 @@
       </div>
 
       <div v-if="activeTab === 'withdraw'" class="profile-form">
-        <p class="withdraw-copy">회원 탈퇴 시 계정 정보가 삭제되며 되돌릴 수 없습니다.</p>
+        <p class="withdraw-copy">
+          회원 탈퇴 시 계정 정보가 삭제되며 되돌릴 수 없습니다.
+        </p>
         <div class="form-group">
           <label class="form-label">비밀번호 확인</label>
           <input v-model="deletePassword" type="password" class="form-input" />
         </div>
         <p v-if="deleteMsg" class="update-msg">{{ deleteMsg }}</p>
-        <button class="btn-delete-account" @click="handleDeleteAccount">회원 탈퇴</button>
+        <button class="btn-delete-account" @click="handleDeleteAccount">
+          회원 탈퇴
+        </button>
       </div>
     </div>
   </div>
@@ -125,7 +152,8 @@ const orders = ref([]);
 const activeTab = ref("orders");
 const payingOrderId = ref(null);
 const TOSS_CLIENT_KEY =
-  import.meta.env.VITE_TOSS_CLIENT_KEY || "test_ck_26DIbXAaVOOZv4EwM2YK3qY50Q9R";
+  import.meta.env.VITE_TOSS_CLIENT_KEY ||
+  "test_ck_26DlbXAaV0OZv4EwM2YK3qY50Q9R";
 const updateMsg = ref("");
 const deleteMsg = ref("");
 const deletePassword = ref("");
@@ -191,7 +219,7 @@ const payOrder = async (order) => {
     const tossPayments = await loadTossPayments();
     await tossPayments.requestPayment("카드", {
       amount: order.totalPrice,
-      orderId: String(order.id).padStart(6, "0"),
+      orderId: `${order.id}-${Date.now()}`,
       orderName: `주문번호 #${order.id}`,
       customerName: order.receiverName,
       successUrl: `${window.location.origin}/payment/success`,
@@ -403,11 +431,26 @@ onMounted(async () => {
   padding: 4px 12px;
 }
 
-.status--pending { background-color: #f5f0e8; color: #8b7355; }
-.status--confirmed { background-color: #edf2e8; color: #3d4a2e; }
-.status--shipped { background-color: #e8f0f5; color: #2c5f8a; }
-.status--delivered { background-color: #e8f5ec; color: #2d7a4f; }
-.status--cancelled { background-color: #f5e8e8; color: #8a2c2c; }
+.status--pending {
+  background-color: #f5f0e8;
+  color: #8b7355;
+}
+.status--confirmed {
+  background-color: #edf2e8;
+  color: #3d4a2e;
+}
+.status--shipped {
+  background-color: #e8f0f5;
+  color: #2c5f8a;
+}
+.status--delivered {
+  background-color: #e8f5ec;
+  color: #2d7a4f;
+}
+.status--cancelled {
+  background-color: #f5e8e8;
+  color: #8a2c2c;
+}
 
 .order-card__body {
   padding: 16px 20px;
