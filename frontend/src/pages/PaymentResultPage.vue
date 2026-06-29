@@ -2,7 +2,13 @@
   <div class="result-page">
     <div class="result-box">
       <!-- 성공 -->
-      <template v-if="isSuccess">
+      <template v-if="isChecking">
+        <div class="result-icon checking">···</div>
+        <h1 class="result-title">결제 승인 확인 중입니다</h1>
+        <p class="result-desc">잠시만 기다려주세요.</p>
+      </template>
+
+      <template v-else-if="isSuccess">
         <div class="result-icon success">✓</div>
         <h1 class="result-title">결제가 완료되었습니다</h1>
         <p class="result-desc">주문이 정상적으로 접수되었습니다.</p>
@@ -29,7 +35,7 @@
         <p class="result-desc">{{ errorMessage || "결제 처리 중 오류가 발생했습니다." }}</p>
       </template>
 
-      <div class="result-actions">
+      <div v-if="!isChecking" class="result-actions">
         <RouterLink to="/" class="btn-outline">홈으로</RouterLink>
         <RouterLink v-if="isSuccess" to="/mypage" class="btn-primary">주문 내역 보기</RouterLink>
         <RouterLink v-else to="/checkout" class="btn-primary">다시 시도</RouterLink>
@@ -44,6 +50,7 @@ import { useRoute } from "vue-router";
 import { paymentAPI } from "../api/index.js";
 
 const route = useRoute();
+const isChecking = ref(true);
 const isSuccess = ref(false);
 const paymentInfo = ref(null);
 const errorMessage = ref("");
@@ -68,6 +75,8 @@ onMounted(async () => {
       }
     } catch (e) {
       errorMessage.value = "결제 승인 중 오류가 발생했습니다.";
+    } finally {
+      isChecking.value = false;
     }
   } else if (code) {
     // 실패 콜백
@@ -80,6 +89,10 @@ onMounted(async () => {
         errorMessage: message,
       });
     }
+    isChecking.value = false;
+  } else {
+    errorMessage.value = "결제 정보를 확인할 수 없습니다.";
+    isChecking.value = false;
   }
 });
 </script>
@@ -119,6 +132,12 @@ onMounted(async () => {
 .result-icon.fail {
   background-color: #c0392b;
   color: white;
+}
+
+.result-icon.checking {
+  background-color: var(--color-border-light);
+  color: var(--color-olive);
+  letter-spacing: 2px;
 }
 
 .result-title {
