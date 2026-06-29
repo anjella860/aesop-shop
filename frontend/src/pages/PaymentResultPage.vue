@@ -56,7 +56,7 @@ onMounted(async () => {
     try {
       const res = await paymentAPI.confirm({
         paymentKey,
-        orderId: Number(orderId),
+        orderId: String(orderId),
         amount: Number(amount),
       });
       if (res.data.success) {
@@ -73,7 +73,7 @@ onMounted(async () => {
     errorMessage.value = message || "결제가 취소되었습니다.";
     if (orderId) {
       await paymentAPI.fail({
-        orderId: Number(orderId),
+        orderId: String(orderId),
         errorCode: code,
         errorMessage: message,
       });
