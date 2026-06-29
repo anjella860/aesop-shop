@@ -1,16 +1,12 @@
 <template>
   <header class="header" :class="{ 'header--scrolled': isScrolled }">
     <div class="header__inner">
-      <!-- 로고 -->
       <RouterLink to="/" class="header__logo">
         <span class="logo-text">AESOP</span>
       </RouterLink>
 
-      <!-- 메인 네비게이션 -->
       <nav class="header__nav">
-        <RouterLink to="/new-notable" class="nav-item"
-          >신제품 & 추천</RouterLink
-        >
+        <RouterLink to="/new-notable" class="nav-item">신제품 & 추천</RouterLink>
         <RouterLink to="/skincare" class="nav-item">스킨케어</RouterLink>
         <RouterLink to="/hand-body" class="nav-item">핸드 & 바디</RouterLink>
         <RouterLink to="/fragrance" class="nav-item">향수</RouterLink>
@@ -18,45 +14,57 @@
         <RouterLink to="/gifts" class="nav-item">기프트</RouterLink>
       </nav>
 
-      <!-- 우측 아이콘 -->
       <div class="header__actions">
-        <RouterLink v-if="isAdmin" to="/admin" class="action-icon" title="관리자">관리자</RouterLink>
-        <RouterLink :to="isLoggedIn ? '/mypage' : '/login'" class="action-icon" :title="isLoggedIn ? '마이페이지' : '로그인'">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-          >
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
-          </svg>
-        </RouterLink>
-        <RouterLink to="/cart" class="action-icon cart-icon" title="장바구니">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-          >
-            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <path d="M16 10a4 4 0 0 1-8 0" />
-          </svg>
-          <span v-if="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
-        </RouterLink>
+        <template v-if="isAdmin">
+          <RouterLink to="/admin" class="action-icon admin-link" title="관리자">
+            관리자
+          </RouterLink>
+          <button class="action-icon logout-btn" type="button" @click="handleLogout">
+            로그아웃
+          </button>
+        </template>
 
-        <!-- 모바일 메뉴 버튼 -->
+        <template v-else>
+          <RouterLink :to="isLoggedIn ? '/mypage' : '/login'" class="action-icon" :title="isLoggedIn ? '마이페이지' : '로그인'">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </RouterLink>
+
+          <RouterLink to="/cart" class="action-icon cart-icon" title="장바구니">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <path d="M16 10a4 4 0 0 1-8 0" />
+            </svg>
+            <span v-if="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
+          </RouterLink>
+        </template>
+
         <button
+          v-if="!isAdmin"
           class="menu-toggle"
           @click="toggleMenu"
           :class="{ open: menuOpen }"
+          type="button"
+          aria-label="메뉴 열기"
         >
           <span></span>
           <span></span>
@@ -65,46 +73,37 @@
       </div>
     </div>
 
-    <!-- 모바일 메뉴 -->
-    <div class="mobile-menu" :class="{ open: menuOpen }">
-      <RouterLink to="/new-notable" class="mobile-nav-item" @click="closeMenu"
-        >신제품 & 추천</RouterLink
-      >
-      <RouterLink to="/skincare" class="mobile-nav-item" @click="closeMenu"
-        >스킨케어</RouterLink
-      >
-      <RouterLink to="/hand-body" class="mobile-nav-item" @click="closeMenu"
-        >핸드 & 바디</RouterLink
-      >
-      <RouterLink to="/fragrance" class="mobile-nav-item" @click="closeMenu"
-        >향수</RouterLink
-      >
-      <RouterLink to="/hair" class="mobile-nav-item" @click="closeMenu"
-        >헤어</RouterLink
-      >
-      <RouterLink to="/gifts" class="mobile-nav-item" @click="closeMenu"
-        >기프트</RouterLink
-      >
-      <RouterLink v-if="isAdmin" to="/admin" class="mobile-nav-item" @click="closeMenu"
-        >관리자</RouterLink
-      >
+    <div v-if="!isAdmin" class="mobile-menu" :class="{ open: menuOpen }">
+      <RouterLink to="/new-notable" class="mobile-nav-item" @click="closeMenu">신제품 & 추천</RouterLink>
+      <RouterLink to="/skincare" class="mobile-nav-item" @click="closeMenu">스킨케어</RouterLink>
+      <RouterLink to="/hand-body" class="mobile-nav-item" @click="closeMenu">핸드 & 바디</RouterLink>
+      <RouterLink to="/fragrance" class="mobile-nav-item" @click="closeMenu">향수</RouterLink>
+      <RouterLink to="/hair" class="mobile-nav-item" @click="closeMenu">헤어</RouterLink>
+      <RouterLink to="/gifts" class="mobile-nav-item" @click="closeMenu">기프트</RouterLink>
 
-      <RouterLink :to="isLoggedIn ? '/mypage' : '/login'" class="mobile-nav-item" @click="closeMenu"
-        >{{ isLoggedIn ? "마이페이지" : "로그인" }}</RouterLink
-      >
-      <RouterLink to="/cart" class="mobile-nav-item" @click="closeMenu"
-        >장바구니</RouterLink
-      >
+      <template v-if="isAdmin">
+        <RouterLink to="/admin" class="mobile-nav-item" @click="closeMenu">관리자</RouterLink>
+        <button class="mobile-nav-item mobile-logout-btn" type="button" @click="handleLogout">로그아웃</button>
+      </template>
+      <template v-else>
+        <RouterLink :to="isLoggedIn ? '/mypage' : '/login'" class="mobile-nav-item" @click="closeMenu">
+          {{ isLoggedIn ? "마이페이지" : "로그인" }}
+        </RouterLink>
+        <RouterLink to="/cart" class="mobile-nav-item" @click="closeMenu">
+          장바구니<span v-if="cartCount > 0"> ({{ cartCount }})</span>
+        </RouterLink>
+      </template>
     </div>
   </header>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { cartAPI, memberAPI } from "../api/index.js";
 
 const route = useRoute();
+const router = useRouter();
 const isScrolled = ref(false);
 const menuOpen = ref(false);
 const cartCount = ref(0);
@@ -135,10 +134,11 @@ const loadMember = async () => {
 };
 
 const loadCartCount = async () => {
-  if (!isLoggedIn.value) {
+  if (!isLoggedIn.value || isAdmin.value) {
     cartCount.value = 0;
     return;
   }
+
   try {
     const response = await cartAPI.getCart();
     cartCount.value = response.data.reduce(
@@ -155,6 +155,19 @@ const refreshHeader = async () => {
   await loadCartCount();
 };
 
+const handleLogout = async () => {
+  try {
+    await memberAPI.logout();
+  } finally {
+    isLoggedIn.value = false;
+    isAdmin.value = false;
+    cartCount.value = 0;
+    closeMenu();
+    window.dispatchEvent(new Event("cart-updated"));
+    router.push("/");
+  }
+};
+
 onMounted(() => {
   window.addEventListener("scroll", handleScroll);
   window.addEventListener("cart-updated", loadCartCount);
@@ -165,6 +178,7 @@ onMounted(() => {
 watch(
   () => route.fullPath,
   () => {
+    closeMenu();
     refreshHeader();
   }
 );
@@ -204,7 +218,6 @@ onUnmounted(() => {
   justify-content: space-between;
 }
 
-/* 로고 */
 .header__logo {
   flex-shrink: 0;
 }
@@ -222,7 +235,6 @@ onUnmounted(() => {
   color: var(--color-gold);
 }
 
-/* 네비게이션 */
 .header__nav {
   display: flex;
   align-items: center;
@@ -251,7 +263,8 @@ onUnmounted(() => {
   transition: width 0.3s ease;
 }
 
-.nav-item:hover {
+.nav-item:hover,
+.nav-item.router-link-active {
   color: var(--color-olive);
 }
 
@@ -260,11 +273,6 @@ onUnmounted(() => {
   width: 100%;
 }
 
-.nav-item.router-link-active {
-  color: var(--color-olive);
-}
-
-/* 우측 아이콘 */
 .header__actions {
   display: flex;
   align-items: center;
@@ -282,6 +290,16 @@ onUnmounted(() => {
   color: var(--color-olive);
 }
 
+.admin-link,
+.logout-btn {
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+.logout-btn {
+  font-family: var(--font-kr);
+}
+
 .cart-icon {
   position: relative;
 }
@@ -293,15 +311,15 @@ onUnmounted(() => {
   background-color: var(--color-gold);
   color: white;
   font-size: 10px;
-  width: 16px;
+  min-width: 16px;
   height: 16px;
-  border-radius: 50%;
+  padding: 0 4px;
+  border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* 모바일 메뉴 버튼 */
 .menu-toggle {
   display: none;
   flex-direction: column;
@@ -320,14 +338,15 @@ onUnmounted(() => {
 .menu-toggle.open span:nth-child(1) {
   transform: translateY(6px) rotate(45deg);
 }
+
 .menu-toggle.open span:nth-child(2) {
   opacity: 0;
 }
+
 .menu-toggle.open span:nth-child(3) {
   transform: translateY(-6px) rotate(-45deg);
 }
 
-/* 모바일 메뉴 */
 .mobile-menu {
   display: none;
   flex-direction: column;
@@ -339,7 +358,7 @@ onUnmounted(() => {
 }
 
 .mobile-menu.open {
-  max-height: 400px;
+  max-height: 560px;
 }
 
 .mobile-nav-item {
@@ -349,13 +368,17 @@ onUnmounted(() => {
   color: var(--color-text);
   border-bottom: 1px solid var(--color-border-light);
   transition: color 0.3s ease;
+  text-align: left;
 }
 
 .mobile-nav-item:hover {
   color: var(--color-olive);
 }
 
-/* 반응형 */
+.mobile-logout-btn {
+  font-family: var(--font-kr);
+}
+
 @media (max-width: 1024px) {
   .header__nav {
     display: none;

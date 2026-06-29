@@ -175,3 +175,53 @@ textarea {
   background-color: var(--color-gold);
   margin: 16px 0;
 }
+
+
+/* portfolio responsive foundation */
+html,
+body,
+#app {
+  width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+input,
+textarea,
+select,
+button {
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --header-height: 64px;
+  }
+
+  .container {
+    padding: 0 20px;
+  }
+
+  .section-title {
+    font-size: 30px;
+  }
+
+  .section-subtitle {
+    margin-bottom: 28px;
+  }
+
+  .btn-primary,
+  .btn-outline,
+  .btn-gold {
+    width: 100%;
+    text-align: center;
+    padding: 13px 20px;
+  }
+}
+
+@media (max-width: 380px) {
+  .container {
+    padding: 0 16px;
+  }
+}
+

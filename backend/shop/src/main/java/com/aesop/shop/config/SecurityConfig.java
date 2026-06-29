@@ -37,23 +37,16 @@ public class SecurityConfig {
                                 "/api/notice/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/*", "/api/reviews/*/count").permitAll()
+                        .requestMatchers("/admin/**")
+                        .hasRole("ADMIN")
                         .requestMatchers(
                                 "/mypage/**", "/api/members/me", "/api/members/logout",
                                 "/api/orders/**", "/api/payments/**",
                                 "/api/cart/**", "/api/reviews/**", "/api/qna/**"
-                        ).hasRole("USER")
-                        .requestMatchers("/admin/**")
-                        .hasRole("ADMIN")
+                        ).hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated()
                 )
-                .formLogin(form ->
-                        form.loginPage("/login")
-                                .loginProcessingUrl("/login")
-                                .usernameParameter("email")
-                                .passwordParameter("password")
-                                .successHandler((req, res, auth) -> res.setStatus(200))
-                                .failureHandler((req, res, e) -> res.setStatus(401))
-                )
+                .formLogin(form -> form.disable())
                 .logout(logout ->
                         logout.logoutUrl("/logout")
                                 .logoutSuccessUrl("/")
@@ -85,6 +78,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         config.addAllowedOrigin("http://localhost:5173");
+        config.addAllowedOrigin("http://127.0.0.1:5173");
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

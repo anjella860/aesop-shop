@@ -173,4 +173,45 @@ onMounted(async () => {
 .btn-small { padding: 6px 12px; border: 1px solid var(--color-border); background: transparent; cursor: pointer; }
 .btn-danger { color: #8a2c2c; border-color: #8a2c2c; }
 .qna-edit { display: grid; gap: 10px; margin-bottom: 12px; }
+
+
+/* portfolio qna mobile polish */
+@media (max-width: 768px) {
+  .qna-page {
+    padding: 40px 0 72px;
+  }
+
+  .page-header {
+    margin-bottom: 40px;
+  }
+
+  .qna-form-box {
+    padding: 24px 20px;
+    margin-bottom: 44px;
+  }
+
+  .qna-item__header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .qna-title {
+    flex-basis: 100%;
+    order: 3;
+  }
+
+  .qna-date {
+    margin-left: auto;
+  }
+
+  .qna-item__body {
+    padding: 18px;
+  }
+
+  .qna-actions {
+    flex-wrap: wrap;
+  }
+}
+
 </style>

@@ -132,4 +132,47 @@ onMounted(async () => {
 .empty { text-align: center; padding: 80px 0; color: var(--color-text-sub); font-size: 14px; }
 
 @media (max-width: 1024px) { .product-grid { grid-template-columns: repeat(2, 1fr); } }
+
+
+/* portfolio mobile grid polish */
+@media (max-width: 640px) {
+  .category-page {
+    padding-bottom: 64px;
+  }
+
+  .category-hero {
+    height: 240px;
+    margin-bottom: 36px;
+  }
+
+  .hero-title {
+    font-size: 34px;
+  }
+
+  .hero-subtitle {
+    letter-spacing: 5px;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px 14px;
+  }
+
+  .product-card__name {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .product-card__volume,
+  .product-card__price {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .product-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 </style>

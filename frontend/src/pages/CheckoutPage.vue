@@ -577,4 +577,33 @@ onMounted(() => {
     position: static;
   }
 }
+
+
+/* portfolio checkout mobile polish */
+@media (max-width: 768px) {
+  .checkout-page {
+    padding: 40px 0 72px;
+  }
+
+  .checkout-layout {
+    gap: 32px;
+  }
+
+  .payment-methods {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-card {
+    min-height: 84px;
+  }
+
+  .order-summary {
+    padding: 28px 22px;
+  }
+
+  .summary-item {
+    align-items: flex-start;
+  }
+}
+
 </style>

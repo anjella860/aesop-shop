@@ -5,6 +5,7 @@ import com.aesop.shop.dto.member.MemberResponseDto;
 import com.aesop.shop.entity.Member;
 import com.aesop.shop.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -71,7 +72,10 @@ public class MemberApiController {
 
     @PostMapping("/api/members/logout")
     public ResponseEntity<Void> apiLogout(HttpServletRequest request) {
-        request.getSession(false).invalidate();
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
         SecurityContextHolder.clearContext();
         return ResponseEntity.ok().build();
     }

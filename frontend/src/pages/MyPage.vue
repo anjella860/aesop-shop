@@ -584,4 +584,55 @@ onMounted(async () => {
   letter-spacing: 1px;
   cursor: pointer;
 }
+
+
+/* portfolio mypage mobile polish */
+@media (max-width: 768px) {
+  .mypage {
+    padding: 40px 0 72px;
+  }
+
+  .member-info {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+    padding: 22px;
+  }
+
+  .tab-bar {
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .tab-btn {
+    flex: 0 0 auto;
+    padding: 14px 20px;
+  }
+
+  .order-card__header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .order-info-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .order-actions {
+    flex-direction: column;
+  }
+
+  .btn-pay-order,
+  .btn-cancel-order {
+    width: 100%;
+  }
+
+  .profile-form {
+    max-width: none;
+  }
+}
+
 </style>

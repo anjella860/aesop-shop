@@ -385,4 +385,37 @@ onMounted(() => {
     font-size: 36px;
   }
 }
+
+
+/* portfolio main mobile polish */
+@media (max-width: 768px) {
+  .hero {
+    min-height: calc(100vh - var(--header-height));
+  }
+
+  .hero__content {
+    padding: 0 20px;
+  }
+
+  .hero__title {
+    font-size: 36px;
+    line-height: 1.35;
+  }
+
+  .hero__subtitle {
+    font-size: 13px;
+  }
+
+  .product-grid,
+  .banner-grid {
+    gap: 24px;
+  }
+}
+
+@media (max-width: 420px) {
+  .hero__title {
+    font-size: 31px;
+  }
+}
+
 </style>

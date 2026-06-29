@@ -1,19 +1,35 @@
 <template>
   <main class="admin-page">
     <aside class="admin-sidebar" aria-label="관리자 메뉴">
-      <RouterLink to="/" class="sidebar-brand">
-        <span>AESOP</span>
-        <strong>ADMIN</strong>
-      </RouterLink>
+      <div class="sidebar-head">
+        <RouterLink to="/" class="sidebar-brand">
+          <span>AESOP</span>
+          <strong>ADMIN</strong>
+        </RouterLink>
+        <button
+          class="admin-menu-toggle"
+          type="button"
+          :class="{ open: adminMenuOpen }"
+          @click="adminMenuOpen = !adminMenuOpen"
+          aria-label="관리자 메뉴 열기"
+        >
+          <span class="admin-menu-toggle__text">관리 메뉴</span>
+          <span class="admin-menu-toggle__lines" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        </button>
+      </div>
 
-      <nav class="sidebar-nav">
+      <nav class="sidebar-nav" :class="{ open: adminMenuOpen }">
         <button
           v-for="tab in adminTabs"
           :key="tab.key"
           class="sidebar-nav__item"
           :class="{ active: activeTab === tab.key }"
           type="button"
-          @click="activeTab = tab.key"
+          @click="selectAdminTab(tab.key)"
         >
           <span>{{ tab.label }}</span>
           <strong v-if="tab.count !== null">{{ tab.count }}</strong>
@@ -217,7 +233,7 @@
                 <td>{{ formatPrice(order.totalPrice) }}</td>
                 <td>
                   <select :value="order.status" @change="changeOrderStatus(order.id, $event.target.value)">
-                    <option v-for="status in orderStatuses" :key="status" :value="status">{{ status }}</option>
+                    <option v-for="status in orderStatuses" :key="status" :value="status">{{ orderStatusLabel(status) }}</option>
                   </select>
                 </td>
                 <td>{{ formatDate(order.orderedAt) }}</td>
@@ -257,8 +273,8 @@
             </div>
             <span>{{ member.phone || "연락처 없음" }}</span>
             <select :value="member.role" @change="changeMemberRole(member.id, $event.target.value)">
-              <option value="USER">USER</option>
-              <option value="ADMIN">ADMIN</option>
+              <option value="USER">일반회원</option>
+              <option value="ADMIN">관리자</option>
             </select>
             <button type="button" @click="removeMember(member.id)">삭제</button>
           </div>
@@ -363,6 +379,7 @@ import { adminAPI, categoryAPI, noticeAPI, productAPI } from "../api/index.js";
 
 const fallbackImg = "https://via.placeholder.com/120x150/3D4A2E/FAFAF7?text=AESOP";
 const activeTab = ref("overview");
+const adminMenuOpen = ref(false);
 const loading = ref(false);
 const errorMessage = ref("");
 const products = ref([]);
@@ -375,6 +392,14 @@ const reviews = ref([]);
 const answerMap = reactive({});
 const memberSearch = ref("");
 const orderStatuses = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"];
+const orderStatusLabels = {
+  PENDING: "결제 대기",
+  CONFIRMED: "주문 확인",
+  SHIPPED: "배송 중",
+  DELIVERED: "배송 완료",
+  CANCELLED: "취소됨",
+};
+const orderStatusLabel = (status) => orderStatusLabels[status] || status;
 
 const productForm = reactive({
   id: null,
@@ -413,6 +438,11 @@ const adminTabs = computed(() => [
 const activeTabInfo = computed(() => adminTabs.value.find((tab) => tab.key === activeTab.value) || adminTabs.value[0]);
 const activeTabLabel = computed(() => activeTabInfo.value.label);
 const activeTabDescription = computed(() => activeTabInfo.value.description);
+
+const selectAdminTab = (key) => {
+  activeTab.value = key;
+  adminMenuOpen.value = false;
+};
 
 const formatPrice = (value) => value ? `${Number(value).toLocaleString()}원` : "0원";
 const categoryName = (id) => categories.value.find((category) => category.id === id)?.name || `#${id}`;
@@ -1255,4 +1285,391 @@ th {
     font-size: 26px;
   }
 }
+
+
+/* portfolio admin responsive polish */
+@media (max-width: 900px) {
+  .admin-page {
+    min-height: 100vh;
+  }
+
+  .admin-sidebar {
+    top: var(--header-height);
+    z-index: 2;
+  }
+
+  .admin-workspace {
+    min-width: 0;
+  }
+
+  .admin-hero {
+    gap: 18px;
+  }
+
+  .refresh-btn,
+  .ghost-btn,
+  .primary-btn {
+    min-height: 42px;
+  }
+
+  .table-wrap {
+    margin: 0 -24px;
+    padding: 0 24px 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-sidebar {
+    padding-top: 14px;
+  }
+
+  .sidebar-brand {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .sidebar-nav__item {
+    min-width: 118px;
+    padding: 12px 14px;
+  }
+
+  .admin-hero h1 {
+    font-size: 26px;
+    line-height: 1.3;
+  }
+
+  .hero-copy {
+    font-size: 13px;
+  }
+
+  .summary-card {
+    min-height: 94px;
+  }
+
+  .table-wrap {
+    margin: 0 -20px;
+    padding: 0 20px 10px;
+  }
+
+  table {
+    min-width: 640px;
+  }
+
+  .product-form label,
+  .notice-form input,
+  .notice-form textarea,
+  .search-row input,
+  .qna-answer-form textarea {
+    min-width: 0;
+  }
+
+  .search-row {
+    grid-template-columns: 1fr;
+  }
+
+  .search-row .ghost-btn,
+  .form-actions .primary-btn,
+  .notice-form .primary-btn {
+    width: 100%;
+  }
+
+  .member-row,
+  .notice-row {
+    gap: 14px;
+  }
+
+  .member-row select,
+  .member-row button,
+  .actions button,
+  .delivery-cell button {
+    width: 100%;
+  }
+}
+
+
+
+/* portfolio admin mobile clipping fix */
+@media (max-width: 900px) {
+  .admin-page {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .admin-sidebar {
+    width: 100%;
+    max-width: 100vw;
+    overflow: hidden;
+  }
+
+  .sidebar-brand {
+    width: 100%;
+  }
+
+  .sidebar-nav {
+    box-sizing: border-box;
+    display: flex;
+    gap: 8px;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 12px 16px 8px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sidebar-nav__item {
+    flex: 0 0 auto;
+    min-width: 112px;
+    scroll-snap-align: start;
+  }
+
+  .admin-workspace {
+    width: 100%;
+    max-width: 100vw;
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 420px) {
+  .sidebar-nav {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .sidebar-nav__item {
+    min-width: 102px;
+    padding: 0 12px;
+  }
+
+  .sidebar-nav__item strong {
+    margin-left: 10px;
+  }
+}
+
+
+/* portfolio admin mobile hamburger menu */
+.sidebar-head {
+  display: block;
+}
+
+.admin-menu-toggle {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .admin-sidebar {
+    padding: 0;
+  }
+
+  .sidebar-head {
+    align-items: center;
+    border-bottom: 1px solid rgba(250, 250, 247, 0.14);
+    display: flex;
+    justify-content: space-between;
+    padding: 18px 20px;
+  }
+
+  .sidebar-brand {
+    border-bottom: 0;
+    padding: 0;
+  }
+
+  .admin-menu-toggle {
+    align-items: center;
+    background: transparent;
+    border: 1px solid rgba(250, 250, 247, 0.28);
+    display: inline-flex;
+    flex-direction: column;
+    gap: 5px;
+    height: 42px;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0;
+    width: 46px;
+  }
+
+  .admin-menu-toggle span {
+    background: var(--color-bg);
+    display: block;
+    height: 1px;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    width: 20px;
+  }
+
+  .admin-menu-toggle.open span:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+  }
+
+  .admin-menu-toggle.open span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .admin-menu-toggle.open span:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
+  }
+
+  .sidebar-nav {
+    box-sizing: border-box;
+    display: grid;
+    gap: 8px;
+    max-height: 0;
+    max-width: 100%;
+    overflow: hidden;
+    padding: 0 16px;
+    scroll-snap-type: none;
+    transition: max-height 0.24s ease, padding 0.24s ease;
+  }
+
+  .sidebar-nav.open {
+    max-height: 560px;
+    padding: 14px 16px 16px;
+  }
+
+  .sidebar-nav__item {
+    flex: initial;
+    min-width: 0;
+    scroll-snap-align: none;
+    width: 100%;
+  }
+}
+
+
+/* keep dashboard tab visible on mobile while other admin tabs stay in hamburger */
+@media (max-width: 900px) {
+  .sidebar-nav {
+    max-height: 72px;
+    padding: 12px 16px 14px;
+  }
+
+  .sidebar-nav:not(.open) .sidebar-nav__item:not(:first-child) {
+    display: none;
+  }
+
+  .sidebar-nav.open .sidebar-nav__item {
+    display: flex;
+  }
+}
+
+
+/* portfolio admin visible mobile menu trigger */
+@media (max-width: 900px) {
+  .admin-menu-toggle {
+    align-items: center;
+    border-color: rgba(250, 250, 247, 0.38);
+    color: var(--color-bg);
+    flex-direction: row;
+    gap: 10px;
+    height: 44px;
+    padding: 0 12px;
+    width: auto;
+  }
+
+  .admin-menu-toggle:hover {
+    background: rgba(250, 250, 247, 0.12);
+    color: var(--color-bg);
+  }
+
+  .admin-menu-toggle__text {
+    background: transparent;
+    display: inline;
+    font-size: 13px;
+    height: auto;
+    letter-spacing: 0;
+    width: auto;
+  }
+
+  .admin-menu-toggle__lines {
+    background: transparent;
+    display: inline-flex;
+    flex-direction: column;
+    gap: 5px;
+    height: auto;
+    width: 20px;
+  }
+
+  .admin-menu-toggle__lines span {
+    background: var(--color-bg);
+    display: block;
+    height: 1px;
+    width: 20px;
+  }
+
+  .admin-menu-toggle.open .admin-menu-toggle__lines span:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+  }
+
+  .admin-menu-toggle.open .admin-menu-toggle__lines span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .admin-menu-toggle.open .admin-menu-toggle__lines span:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
+  }
+}
+
+@media (max-width: 420px) {
+  .sidebar-head {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .admin-menu-toggle__text {
+    font-size: 12px;
+  }
+}
+
+
+/* fix admin menu button text being treated as hamburger lines */
+@media (max-width: 900px) {
+  .admin-menu-toggle .admin-menu-toggle__text,
+  .admin-menu-toggle.open .admin-menu-toggle__text {
+    background: transparent !important;
+    display: inline-block !important;
+    height: auto !important;
+    line-height: 1 !important;
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    white-space: nowrap !important;
+    width: auto !important;
+    writing-mode: horizontal-tb !important;
+  }
+
+  .admin-menu-toggle .admin-menu-toggle__lines,
+  .admin-menu-toggle.open .admin-menu-toggle__lines {
+    background: transparent !important;
+    display: inline-flex !important;
+    flex-direction: column !important;
+    gap: 5px !important;
+    height: auto !important;
+    opacity: 1 !important;
+    transform: none !important;
+    width: 20px !important;
+  }
+
+  .admin-menu-toggle .admin-menu-toggle__lines span {
+    background: var(--color-bg) !important;
+    display: block !important;
+    height: 1px !important;
+    opacity: 1;
+    width: 20px !important;
+  }
+
+  .admin-menu-toggle.open .admin-menu-toggle__lines span:nth-child(1) {
+    transform: translateY(6px) rotate(45deg) !important;
+  }
+
+  .admin-menu-toggle.open .admin-menu-toggle__lines span:nth-child(2) {
+    opacity: 0 !important;
+  }
+
+  .admin-menu-toggle.open .admin-menu-toggle__lines span:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg) !important;
+  }
+}
+
 </style>

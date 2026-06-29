@@ -24,6 +24,7 @@ export const categoryAPI = {
 // 회원 API
 export const memberAPI = {
   login: (data) => api.post("/api/members/login", data),
+  logout: () => api.post("/api/members/logout"),
   signup: (data) => api.post("/api/members/signup", data),
   getMyInfo: () => api.get("/api/members/me"),
   updateMyInfo: (data) => api.put("/api/members/me", data),
@@ -77,21 +78,28 @@ export const noticeAPI = {
 // 관리자 API
 export const adminAPI = {
   getMembers: () => api.get("/admin/members"),
-  searchMembers: (email) => api.get("/admin/members/search", { params: { email } }),
-  changeMemberRole: (id, role) => api.put(`/admin/members/${id}/role`, null, { params: { role } }),
+  searchMembers: (email) =>
+    api.get("/admin/members/search", { params: { email } }),
+  changeMemberRole: (id, role) =>
+    api.put(`/admin/members/${id}/role`, null, { params: { role } }),
   deleteMember: (id) => api.delete(`/admin/members/${id}`),
-  addProduct: (data) => api.post("/admin/products", data, {
-    headers: { "Content-Type": "multipart/form-data" },
-  }),
-  updateProduct: (id, data) => api.put(`/admin/products/${id}`, data, {
-    headers: { "Content-Type": "multipart/form-data" },
-  }),
+  addProduct: (data) =>
+    api.post("/admin/products", data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+  updateProduct: (id, data) =>
+    api.put(`/admin/products/${id}`, data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
   deleteProduct: (id) => api.delete(`/admin/products/${id}`),
   getOrders: () => api.get("/admin/orders"),
-  changeOrderStatus: (id, status) => api.put(`/admin/orders/${id}/status`, null, { params: { status } }),
-  updateDelivery: (id, data) => api.put(`/admin/orders/${id}/delivery`, null, { params: data }),
+  changeOrderStatus: (id, status) =>
+    api.put(`/admin/orders/${id}/status`, null, { params: { status } }),
+  updateDelivery: (id, data) =>
+    api.put(`/admin/orders/${id}/delivery`, null, { params: data }),
   getQna: () => api.get("/admin/qna"),
-  answerQna: (id, answer) => api.put(`/admin/qna/${id}/answer`, null, { params: { answer } }),
+  answerQna: (id, answer) =>
+    api.put(`/admin/qna/${id}/answer`, null, { params: { answer } }),
   deleteQnaAnswer: (id) => api.delete(`/admin/qna/${id}/answer`),
   getReviews: () => api.get("/admin/reviews"),
   deleteReview: (id) => api.delete(`/admin/reviews/${id}`),

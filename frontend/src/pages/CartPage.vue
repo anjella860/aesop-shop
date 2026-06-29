@@ -397,4 +397,56 @@ onMounted(() => {
     grid-column: 2;
   }
 }
+
+
+/* portfolio cart mobile polish */
+@media (max-width: 768px) {
+  .cart-page {
+    padding: 40px 0 72px;
+  }
+
+  .cart-layout {
+    gap: 32px;
+  }
+
+  .cart-item {
+    align-items: start;
+    gap: 14px;
+    padding: 18px 0;
+  }
+
+  .cart-item__img {
+    width: 80px;
+    height: 104px;
+  }
+
+  .cart-item__qty {
+    justify-content: flex-start;
+  }
+
+  .cart-item__subtotal {
+    min-width: 0;
+    text-align: left;
+  }
+
+  .cart-item__remove {
+    justify-self: start;
+  }
+
+  .cart-summary {
+    padding: 28px 22px;
+  }
+}
+
+@media (max-width: 380px) {
+  .cart-item {
+    grid-template-columns: 72px 1fr;
+  }
+
+  .cart-item__img {
+    width: 72px;
+    height: 96px;
+  }
+}
+
 </style>

@@ -23,14 +23,11 @@ public class AdminAccountInitializer implements CommandLineRunner {
         Member admin = memberRepository.findByEmail(ADMIN_EMAIL)
                 .orElseGet(() -> Member.builder()
                         .email(ADMIN_EMAIL)
-                        .name("관리자")
-                        .phone("010-0000-0000")
-                        .address("테스트")
                         .build());
 
         admin.setName("관리자");
         admin.setPhone("010-0000-0000");
-        admin.setAddress("테스트");
+        admin.setAddress("테스트 주소");
         admin.setRole(Role.ADMIN);
         admin.setPassword(passwordEncoder.encode(ADMIN_PASSWORD));
         memberRepository.save(admin);

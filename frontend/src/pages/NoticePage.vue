@@ -87,4 +87,36 @@ onMounted(async () => {
   color: var(--color-text-sub);
   line-height: 1.8;
 }
+
+
+/* portfolio notice mobile polish */
+@media (max-width: 768px) {
+  .notice-page {
+    padding: 40px 0 72px;
+  }
+
+  .page-header {
+    margin-bottom: 40px;
+  }
+
+  .notice-item__header {
+    align-items: flex-start;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 8px 12px;
+  }
+
+  .notice-title {
+    grid-column: 2 / 4;
+  }
+
+  .notice-date {
+    grid-column: 2 / 3;
+  }
+
+  .notice-item__body {
+    padding: 18px;
+  }
+}
+
 </style>

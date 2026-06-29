@@ -500,4 +500,48 @@ onMounted(async () => {
     gap: 40px;
   }
 }
+
+
+/* portfolio product detail mobile polish */
+@media (max-width: 768px) {
+  .product-detail {
+    padding: 32px 0 72px;
+  }
+
+  .detail-layout {
+    gap: 28px;
+  }
+
+  .product-info {
+    padding: 0;
+  }
+
+  .product-name {
+    font-size: 30px;
+    line-height: 1.35;
+  }
+
+  .product-price {
+    font-size: 24px;
+  }
+
+  .quantity-control {
+    justify-content: center;
+  }
+
+  .product-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .btn-cart,
+  .btn-buy {
+    width: 100%;
+  }
+
+  .review-form {
+    max-width: none;
+  }
+}
+
 </style>

@@ -32,7 +32,7 @@
         <p v-if="errorMsg" class="error-msg">{{ errorMsg }}</p>
 
         <button type="submit" class="btn-submit" :disabled="isLoading">
-          {{ isLoading ? '로그인 중...' : '로그인' }}
+          {{ isLoading ? "로그인 중..." : "로그인" }}
         </button>
       </form>
 
@@ -63,8 +63,10 @@ const handleLogin = async () => {
   isLoading.value = true;
   errorMsg.value = "";
   try {
-    await memberAPI.login(form.value);
-    router.push(route.query.redirect || "/");
+    const response = await memberAPI.login(form.value);
+    const isAdmin = response.data?.role === "ADMIN";
+    const redirectPath = route.query.redirect || (isAdmin ? "/admin" : "/");
+    router.push(redirectPath);
   } catch (e) {
     errorMsg.value =
       e.response?.data?.message || "이메일 또는 비밀번호가 올바르지 않습니다.";
