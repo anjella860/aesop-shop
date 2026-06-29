@@ -124,15 +124,19 @@ const addToCart = async () => {
     window.dispatchEvent(new Event("cart-updated"));
     cartMsg.value = "장바구니에 담겼습니다.";
     setTimeout(() => (cartMsg.value = ""), 2000);
+    return true;
   } catch (e) {
     cartMsg.value = "로그인이 필요합니다.";
     setTimeout(() => router.push("/login"), 1500);
+    return false;
   }
 };
 
 const buyNow = async () => {
-  await addToCart();
-  router.push("/cart");
+  const added = await addToCart();
+  if (added) {
+    router.push("/checkout");
+  }
 };
 
 const submitReview = async () => {
